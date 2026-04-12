@@ -42,29 +42,36 @@ class WatchHistoryListScreen extends StatelessWidget {
                 ],
               ),
             )
-          : GridView.builder(
-              padding: EdgeInsets.all(16),
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: crossAxisCount,
-                childAspectRatio: cardWidth / cardHeight,
-                crossAxisSpacing: 8,
-                mainAxisSpacing: 8,
+          : Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: ResponsiveHelper.getMaxContentWidth(context),
+                ),
+                child: GridView.builder(
+                  padding: EdgeInsets.all(16),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: crossAxisCount,
+                    childAspectRatio: cardWidth / cardHeight,
+                    crossAxisSpacing: 8,
+                    mainAxisSpacing: 8,
+                  ),
+                  itemCount: histories.length,
+                  itemBuilder: (context, index) {
+                    final history = histories[index];
+                    return WatchHistoryCard(
+                      history: history,
+                      width: cardWidth,
+                      height: cardHeight,
+                      showProgress:
+                          title == 'Devam Et' ||
+                          title == 'Filmler' ||
+                          title == 'Diziler',
+                      onTap: () => onHistoryTap?.call(history),
+                      onRemove: () => onHistoryRemove?.call(history),
+                    );
+                  },
+                ),
               ),
-              itemCount: histories.length,
-              itemBuilder: (context, index) {
-                final history = histories[index];
-                return WatchHistoryCard(
-                  history: history,
-                  width: cardWidth,
-                  height: cardHeight,
-                  showProgress:
-                      title == 'Devam Et' ||
-                      title == 'Filmler' ||
-                      title == 'Diziler',
-                  onTap: () => onHistoryTap?.call(history),
-                  onRemove: () => onHistoryRemove?.call(history),
-                );
-              },
             ),
     );
   }

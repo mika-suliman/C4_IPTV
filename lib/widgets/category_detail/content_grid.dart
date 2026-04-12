@@ -16,19 +16,26 @@ class ContentGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GridView.builder(
-      padding: const EdgeInsets.all(16),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: ResponsiveHelper.getCrossAxisCount(context),
-        childAspectRatio: 0.65,
-        crossAxisSpacing: 8,
-        mainAxisSpacing: 8,
-      ),
-      itemCount: items.length,
-      itemBuilder: (context, index) => ContentCard(
-        content: items[index],
-        width: 150,
-        onTap: () => onItemTap(items[index]),
+    return Center(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: ResponsiveHelper.getMaxContentWidth(context),
+        ),
+        child: GridView.builder(
+          padding: const EdgeInsets.all(16),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: ResponsiveHelper.getCrossAxisCount(context),
+            childAspectRatio: 0.65,
+            crossAxisSpacing: 8,
+            mainAxisSpacing: 8,
+          ),
+          itemCount: items.length,
+          itemBuilder: (context, index) => ContentCard(
+            content: items[index],
+            width: 150,
+            onTap: () => onItemTap(items[index]),
+          ),
+        ),
       ),
     );
   }

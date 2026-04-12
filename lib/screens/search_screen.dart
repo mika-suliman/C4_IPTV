@@ -213,12 +213,19 @@ class SearchScreenState extends State<SearchScreen> {
       return _buildInitialState();
     }
 
-    return GridView.builder(
-      padding: const EdgeInsets.all(16),
-      gridDelegate: _buildGridDelegate(context),
-      itemCount: contentItems.length,
-      itemBuilder: (context, index) =>
-          _buildContentItem(context, index, contentItems),
+    return Center(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: ResponsiveHelper.getMaxContentWidth(context),
+        ),
+        child: GridView.builder(
+          padding: const EdgeInsets.all(16),
+          gridDelegate: _buildGridDelegate(context),
+          itemCount: contentItems.length,
+          itemBuilder: (context, index) =>
+              _buildContentItem(context, index, contentItems),
+        ),
+      ),
     );
   }
 

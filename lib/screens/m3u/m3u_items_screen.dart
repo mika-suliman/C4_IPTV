@@ -1,6 +1,7 @@
 import 'package:another_iptv_player/l10n/localization_extension.dart';
 import 'package:another_iptv_player/models/m3u_item.dart';
 import 'package:another_iptv_player/screens/m3u/m3u_player_screen.dart';
+import 'package:another_iptv_player/utils/responsive_helper.dart';
 import 'package:flutter/material.dart';
 import '../../models/content_type.dart';
 import '../../models/playlist_content_model.dart';
@@ -105,7 +106,12 @@ class _M3uItemsScreenState extends State<M3uItemsScreen> {
           ),
         ],
       ),
-      body: Column(
+      body: Center(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: ResponsiveHelper.getSettingsMaxWidth(context),
+          ),
+          child: Column(
         children: [
           if (!isSearching && _getUniqueGroups().isNotEmpty)
             Padding(
@@ -235,6 +241,8 @@ class _M3uItemsScreenState extends State<M3uItemsScreen> {
             ),
           ),
         ],
+      ),
+        ),
       ),
     );
   }

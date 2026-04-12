@@ -1,4 +1,5 @@
 import 'package:another_iptv_player/l10n/localization_extension.dart';
+import 'package:another_iptv_player/utils/responsive_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../controllers/playlist_controller.dart';
@@ -89,21 +90,28 @@ class _PlaylistScreenBody extends StatelessWidget {
   ) {
     return RefreshIndicator(
       onRefresh: () => controller.loadPlaylists(context),
-      child: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: controller.playlists.length,
-        itemBuilder: (context, index) {
-          return PlaylistCard(
-            playlist: controller.playlists[index],
-            onTap: () =>
-                controller.openPlaylist(context, controller.playlists[index]),
-            onDelete: () => _showDeleteDialog(
-              context,
-              controller,
-              controller.playlists[index],
-            ),
-          );
-        },
+      child: Center(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: ResponsiveHelper.getSettingsMaxWidth(context),
+          ),
+          child: ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: controller.playlists.length,
+            itemBuilder: (context, index) {
+              return PlaylistCard(
+                playlist: controller.playlists[index],
+                onTap: () =>
+                    controller.openPlaylist(context, controller.playlists[index]),
+                onDelete: () => _showDeleteDialog(
+                  context,
+                  controller,
+                  controller.playlists[index],
+                ),
+              );
+            },
+          ),
+        ),
       ),
     );
   }

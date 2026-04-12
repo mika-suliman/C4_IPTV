@@ -18,88 +18,93 @@ class PlaylistTypeScreen extends StatelessWidget {
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
-          return SingleChildScrollView(
+          return Center(
             child: ConstrainedBox(
-              constraints: BoxConstraints(minHeight: constraints.maxHeight),
-              child: IntrinsicHeight(
-                child: Padding(
-                  padding: EdgeInsets.all(24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SizedBox(height: 20),
-                      Text(
-                        context.loc.select_playlist_type,
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      SizedBox(height: 8),
-                      Text(
-                        context.loc.select_playlist_message,
-                        style: TextStyle(fontSize: 16),
-                      ),
-                      SizedBox(height: 40),
-                      _buildPlaylistTypeCard(
-                        context,
-                        title: 'Xtream Codes',
-                        subtitle: context.loc.xtream_code_title,
-                        description: context.loc.xtream_code_description,
-                        icon: Icons.stream,
-                        color: Colors.blue,
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  NewXtreamCodePlaylistScreen(),
+              constraints: BoxConstraints(maxWidth: 700),
+              child: SingleChildScrollView(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                  child: IntrinsicHeight(
+                    child: Padding(
+                      padding: EdgeInsets.all(24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SizedBox(height: 20),
+                          Text(
+                            context.loc.select_playlist_type,
+                            style: TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
                             ),
-                          );
-                        },
-                      ),
-                      SizedBox(height: 20),
-                      _buildPlaylistTypeCard(
-                        context,
-                        title: 'M3U Playlist',
-                        subtitle: context.loc.m3u_playlist_title,
-                        description: context.loc.m3u_playlist_description,
-                        icon: Icons.playlist_play,
-                        color: Colors.green,
-                        onTap: () {
-                          Navigator.push(
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            context.loc.select_playlist_message,
+                            style: TextStyle(fontSize: 16),
+                          ),
+                          SizedBox(height: 40),
+                          _buildPlaylistTypeCard(
                             context,
-                            MaterialPageRoute(
-                              builder: (context) => NewM3uPlaylistScreen(),
-                            ),
-                          );
-                        },
-                      ),
-                      Spacer(),
-                      Container(
-                        padding: EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.blue.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(Icons.info_outline, color: Colors.blue),
-                            SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                context.loc.select_playlist_type_footer,
-                                style: TextStyle(
-                                  color: Colors.blue[800],
-                                  fontSize: 14,
+                            title: 'Xtream Codes',
+                            subtitle: context.loc.xtream_code_title,
+                            description: context.loc.xtream_code_description,
+                            icon: Icons.stream,
+                            color: Colors.blue,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      NewXtreamCodePlaylistScreen(),
                                 ),
-                              ),
+                              );
+                            },
+                          ),
+                          SizedBox(height: 20),
+                          _buildPlaylistTypeCard(
+                            context,
+                            title: 'M3U Playlist',
+                            subtitle: context.loc.m3u_playlist_title,
+                            description: context.loc.m3u_playlist_description,
+                            icon: Icons.playlist_play,
+                            color: Colors.green,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => NewM3uPlaylistScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                          Spacer(),
+                          Container(
+                            padding: EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.blue.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                          ],
-                        ),
+                            child: Row(
+                              children: [
+                                Icon(Icons.info_outline, color: Colors.blue),
+                                SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    context.loc.select_playlist_type_footer,
+                                    style: TextStyle(
+                                      color: Colors.blue[800],
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          SizedBox(height: 24),
+                        ],
                       ),
-                      SizedBox(height: 24),
-                    ],
+                    ),
                   ),
                 ),
               ),

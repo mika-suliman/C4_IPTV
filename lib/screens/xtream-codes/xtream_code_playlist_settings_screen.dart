@@ -50,22 +50,27 @@ class _XtreamCodePlaylistSettingsScreenState
         ),
         actions: [],
       ),
-      body: ListView(
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-        children: [
-          StatusCardWidget(serverInfo: _serverInfo),
-          const SizedBox(height: 12),
-          const GeneralSettingsWidget(),
-          const SizedBox(height: 16),
-          PlaylistInfoWidget(playlist: widget.playlist),
-          const SizedBox(height: 16),
-          SubscriptionInfoWidget(serverInfo: _serverInfo),
-          const SizedBox(height: 16),
-          if (_serverInfo?.serverInfo != null) ...[
-            ServerInfoWidget(serverInfo: _serverInfo!),
-            const SizedBox(height: 16),
-          ],
-        ],
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 700),
+          child: ListView(
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+            children: [
+              StatusCardWidget(serverInfo: _serverInfo),
+              const SizedBox(height: 12),
+              const GeneralSettingsWidget(),
+              const SizedBox(height: 16),
+              PlaylistInfoWidget(playlist: widget.playlist),
+              const SizedBox(height: 16),
+              SubscriptionInfoWidget(serverInfo: _serverInfo),
+              const SizedBox(height: 16),
+              if (_serverInfo?.serverInfo != null) ...[
+                ServerInfoWidget(serverInfo: _serverInfo!),
+                const SizedBox(height: 16),
+              ],
+            ],
+          ),
+        ),
       ),
     );
   }

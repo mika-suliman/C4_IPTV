@@ -99,36 +99,41 @@ class NewM3uPlaylistScreenState extends State<NewM3uPlaylistScreen> {
       appBar: AppBar(title: Text(context.loc.m3u_playlist)),
       body: Consumer<PlaylistController>(
         builder: (context, controller, child) {
-          return SingleChildScrollView(
-            padding: EdgeInsets.all(24),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  if (isLoading)
-                    Container(
-                      color: Colors.black.withOpacity(0.5),
-                      child: Center(child: CircularProgressIndicator()),
-                    ),
-                  _buildHeader(colorScheme),
-                  SizedBox(height: 32),
-                  _buildPlaylistNameField(colorScheme),
-                  SizedBox(height: 20),
-                  _buildSourceTypeSelector(colorScheme),
-                  SizedBox(height: 20),
-                  _isUrlSource
-                      ? _buildUrlField(colorScheme)
-                      : _buildFilePickerField(colorScheme),
-                  SizedBox(height: 32),
-                  _buildSaveButton(controller, colorScheme),
-                  if (controller.error != null) ...[
-                    SizedBox(height: 20),
-                    _buildErrorCard(controller.error!, colorScheme),
-                  ],
-                  SizedBox(height: 20),
-                  _buildInfoCard(colorScheme),
-                ],
+          return Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 600),
+              child: SingleChildScrollView(
+                padding: EdgeInsets.all(24),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (isLoading)
+                        Container(
+                          color: Colors.black.withOpacity(0.5),
+                          child: Center(child: CircularProgressIndicator()),
+                        ),
+                      _buildHeader(colorScheme),
+                      SizedBox(height: 32),
+                      _buildPlaylistNameField(colorScheme),
+                      SizedBox(height: 20),
+                      _buildSourceTypeSelector(colorScheme),
+                      SizedBox(height: 20),
+                      _isUrlSource
+                          ? _buildUrlField(colorScheme)
+                          : _buildFilePickerField(colorScheme),
+                      SizedBox(height: 32),
+                      _buildSaveButton(controller, colorScheme),
+                      if (controller.error != null) ...[
+                        SizedBox(height: 20),
+                        _buildErrorCard(controller.error!, colorScheme),
+                      ],
+                      SizedBox(height: 20),
+                      _buildInfoCard(colorScheme),
+                    ],
+                  ),
+                ),
               ),
             ),
           );

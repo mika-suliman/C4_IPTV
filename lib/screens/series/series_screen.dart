@@ -344,31 +344,36 @@ class _SeriesScreenState extends State<SeriesScreen> {
       );
     }
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Rating Bölümü
-          _buildRatingSection(),
-          const SizedBox(height: 20),
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 900),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Rating Bölümü
+              _buildRatingSection(),
+              const SizedBox(height: 20),
 
-          // Continue Watching button (only when we have last opened episode)
-          if (_lastOpenedEpisode != null) ...[
-            _buildContinueWatchingButton(),
-            const SizedBox(height: 20),
-          ],
+              // Continue Watching button (only when we have last opened episode)
+              if (_lastOpenedEpisode != null) ...[
+                _buildContinueWatchingButton(),
+                const SizedBox(height: 20),
+              ],
 
 
-          // Sezonlar Bölümü
-          _buildSeasonsSection(),
-          const SizedBox(height: 24),
+              // Sezonlar Bölümü
+              _buildSeasonsSection(),
+              const SizedBox(height: 24),
 
-          // Dizi Bilgileri
-          _buildSeriesDetails(),
+              // Dizi Bilgileri
+              _buildSeriesDetails(),
 
-          const SizedBox(height: 40),
-        ],
+              const SizedBox(height: 40),
+            ],
+          ),
+        ),
       ),
     );
   }

@@ -49,13 +49,18 @@ class _N3uPlaylistSettingsScreenState extends State<M3uPlaylistSettingsScreen> {
         ),
         actions: [],
       ),
-      body: ListView(
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-        children: [
-          const GeneralSettingsWidget(),
-          const SizedBox(height: 16),
-          PlaylistInfoWidget(playlist: widget.playlist),
-        ],
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 700),
+          child: ListView(
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+            children: [
+              const GeneralSettingsWidget(),
+              const SizedBox(height: 16),
+              PlaylistInfoWidget(playlist: widget.playlist),
+            ],
+          ),
+        ),
       ),
     );
   }
