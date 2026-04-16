@@ -1,5 +1,6 @@
 import 'package:another_iptv_player/database/database.dart';
 import 'package:another_iptv_player/screens/settings/subtitle_settings_section.dart';
+import 'package:another_iptv_player/screens/settings/parental_controls_screen.dart';
 import 'package:another_iptv_player/services/service_locator.dart';
 import 'package:another_iptv_player/utils/get_playlist_type.dart';
 import 'package:another_iptv_player/utils/show_loading_dialog.dart';
@@ -58,7 +59,7 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget> {
   Future<void> _loadSettings() async {
     try {
       final backgroundPlay = await UserPreferences.getBackgroundPlay();
-      final themeMode = await UserPreferences.getThemeMode();
+      final themeName = await UserPreferences.getThemeName();
       final brightnessGesture = await UserPreferences.getBrightnessGesture();
       final volumeGesture = await UserPreferences.getVolumeGesture();
       final seekGesture = await UserPreferences.getSeekGesture();
@@ -67,7 +68,7 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget> {
       final packageInfo = await PackageInfo.fromPlatform();
       setState(() {
         _backgroundPlayEnabled = backgroundPlay;
-        _selectedTheme = _themeModeToString(themeMode);
+        _selectedTheme = themeName;
         _brightnessGesture = brightnessGesture;
         _volumeGesture = volumeGesture;
         _seekGesture = seekGesture;
@@ -80,28 +81,6 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget> {
       setState(() {
         _isLoading = false;
       });
-    }
-  }
-
-  String _themeModeToString(ThemeMode mode) {
-    switch (mode) {
-      case ThemeMode.light:
-        return 'light';
-      case ThemeMode.dark:
-        return 'dark';
-      default:
-        return 'system';
-    }
-  }
-
-  ThemeMode _stringToThemeMode(String value) {
-    switch (value) {
-      case 'light':
-        return ThemeMode.light;
-      case 'dark':
-        return ThemeMode.dark;
-      default:
-        return ThemeMode.system;
     }
   }
 
@@ -234,10 +213,6 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget> {
                       value: _selectedTheme,
                       items: [
                         DropdownMenuItem(
-                          value: 'system',
-                          child: Text(context.loc.standard),
-                        ),
-                        DropdownMenuItem(
                           value: 'light',
                           child: Text(context.loc.light),
                         ),
@@ -245,15 +220,32 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget> {
                           value: 'dark',
                           child: Text(context.loc.dark),
                         ),
+                        const DropdownMenuItem(
+                          value: 'skyBlue',
+                          child: Text('Sky Blue'),
+                        ),
                       ],
                       onChanged: (value) async {
                         if (value != null) {
-                          final themeMode = _stringToThemeMode(value);
-                          await themeProvider.setTheme(themeMode);
+                          await themeProvider.setTheme(value);
                           setState(() {
                             _selectedTheme = value;
                           });
                         }
+                      },
+                    ),
+                    const Divider(height: 1),
+                    ListTile(
+                      leading: const Icon(Icons.lock_outline),
+                      title: const Text('Parental Controls'),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ParentalControlsScreen(),
+                          ),
+                        );
                       },
                     ),
                   ],

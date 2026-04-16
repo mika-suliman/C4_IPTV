@@ -7,6 +7,12 @@ import '../screens/live_stream/live_stream_screen.dart';
 import '../screens/m3u/m3u_player_screen.dart';
 import '../screens/movies/movie_screen.dart';
 import '../screens/series/series_screen.dart';
+import '../screens/desktop/desktop_movie_detail_screen.dart';
+import '../screens/desktop/desktop_series_detail_screen.dart';
+
+bool _isDesktop(BuildContext context) {
+  return MediaQuery.of(context).size.width >= 900;
+}
 
 void navigateByContentType(BuildContext context, ContentItem content) {
   if (isM3u &&
@@ -30,6 +36,8 @@ void navigateByContentType(BuildContext context, ContentItem content) {
     return;
   }
 
+  final desktop = _isDesktop(context);
+
   switch (content.contentType) {
     case ContentType.liveStream:
       Navigator.push(
@@ -39,20 +47,40 @@ void navigateByContentType(BuildContext context, ContentItem content) {
         ),
       );
     case ContentType.vod:
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => MovieScreen(contentItem: content),
-        ),
-      );
-    case ContentType.series:
-      if (isXtreamCode) {
+      if (desktop && isXtreamCode) {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => SeriesScreen(contentItem: content),
+            builder: (context) =>
+                DesktopMovieDetailScreen(contentItem: content),
           ),
         );
+      } else {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => MovieScreen(contentItem: content),
+          ),
+        );
+      }
+    case ContentType.series:
+      if (isXtreamCode) {
+        if (desktop) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) =>
+                  DesktopSeriesDetailScreen(contentItem: content),
+            ),
+          );
+        } else {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => SeriesScreen(contentItem: content),
+            ),
+          );
+        }
       } else if (isM3u) {
         Navigator.push(
           context,

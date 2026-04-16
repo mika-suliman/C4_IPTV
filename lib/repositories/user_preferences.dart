@@ -225,6 +225,8 @@ class UserPreferences {
     return prefs.getStringList(_hiddenCategoriesKey) ?? [];
   }
 
+  static const String _keyThemeName = 'theme_name';
+
   static Future<void> setThemeMode(ThemeMode mode) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_keyThemeMode, mode.toString().split('.').last);
@@ -241,6 +243,17 @@ class UserPreferences {
       default:
         return ThemeMode.system;
     }
+  }
+
+  /// Named theme support: 'light', 'dark', 'skyBlue'
+  static Future<void> setThemeName(String name) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyThemeName, name);
+  }
+
+  static Future<String> getThemeName() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_keyThemeName) ?? 'dark';
   }
 
   // Player gesture settings

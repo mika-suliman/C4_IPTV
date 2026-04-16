@@ -8,7 +8,6 @@ import 'controllers/locale_provider.dart';
 import 'controllers/theme_provider.dart';
 import 'l10n/app_localizations.dart';
 import 'l10n/supported_languages.dart';
-import 'utils/app_themes.dart';
 
 Future<void> main() async {
   await setupServiceLocator();
@@ -44,9 +43,10 @@ class MyApp extends StatelessWidget {
         GlobalCupertinoLocalizations.delegate,
       ],
       title: 'Another IPTV Player',
-      theme: AppThemes.lightTheme,
-      darkTheme: AppThemes.darkTheme,
-      themeMode: themeProvider.themeMode,
+      // Use the named theme system — supports Light, Dark, and Sky Blue
+      theme: themeProvider.currentThemeData,
+      darkTheme: themeProvider.isDark ? themeProvider.currentThemeData : null,
+      themeMode: themeProvider.isDark ? ThemeMode.dark : ThemeMode.light,
       home: AppInitializerScreen(),
       debugShowCheckedModeBanner: false,
     );
