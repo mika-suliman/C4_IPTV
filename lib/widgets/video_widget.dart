@@ -1,8 +1,9 @@
-import 'package:another_iptv_player/repositories/user_preferences.dart';
+import 'package:another_iptv_player/controllers/xtream_code_home_controller.dart';
 import 'package:another_iptv_player/services/player_state.dart';
 import 'package:another_iptv_player/widgets/player/c4_player_overlay.dart';
 import 'package:flutter/material.dart';
 import 'package:media_kit_video/media_kit_video.dart';
+import 'package:provider/provider.dart';
 
 class VideoWidget extends StatefulWidget {
   final VideoController controller;
@@ -41,6 +42,9 @@ class _VideoWidgetState extends State<VideoWidget> {
       return const Center(child: CircularProgressIndicator());
     }
 
+    // Safely try to get the XtreamCodeHomeController if it exists in the tree
+    final homeController = context.read<XtreamCodeHomeController?>();
+
     return Stack(
       children: [
         Video(
@@ -53,6 +57,7 @@ class _VideoWidgetState extends State<VideoWidget> {
         C4PlayerOverlay(
           player: widget.controller.player,
           controller: widget.controller,
+          homeController: homeController,
         ),
       ],
     );

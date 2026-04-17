@@ -5,21 +5,21 @@ import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:window_manager/window_manager.dart';
 import 'dart:io';
-import 'package:provider/provider.dart';
 import '../../controllers/xtream_code_home_controller.dart';
 import '../../services/player_state.dart' as app_player_state;
-import '../../models/playlist_content_model.dart';
-import '../../utils/navigate_by_content_type.dart';
 import '../../utils/get_playlist_type.dart';
 
 class C4PlayerOverlay extends StatefulWidget {
   final Player player;
   final VideoController controller;
 
+  final XtreamCodeHomeController? homeController;
+
   const C4PlayerOverlay({
     super.key,
     required this.player,
     required this.controller,
+    this.homeController,
   });
 
   @override
@@ -36,6 +36,7 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
   
   // Fullscreen state
   bool _isFullscreen = false;
+  bool _isTogglingFullscreen = false;
   
   // Stream metadata state
   int? _resW;
@@ -152,10 +153,17 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
   }
 
   Future<void> _toggleFullscreen() async {
+    if (_isTogglingFullscreen) return;
+
     if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
-      final isFull = await windowManager.isFullScreen();
-      await windowManager.setFullScreen(!isFull);
-      if (mounted) setState(() => _isFullscreen = !isFull);
+      _isTogglingFullscreen = true;
+      try {
+        final isFull = await windowManager.isFullScreen();
+        await windowManager.setFullScreen(!isFull);
+        if (mounted) setState(() => _isFullscreen = !isFull);
+      } finally {
+        _isTogglingFullscreen = false;
+      }
     }
   }
 
@@ -434,9 +442,6 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
   }
 
   Widget _buildSidePanel(ThemeData theme) {
-    // Get the home controller to access global categories and channels
-    final homeController = Provider.of<XtreamCodeHomeController>(context, listen: false);
-    
     return Positioned(
       top: 0,
       right: 0,
@@ -470,7 +475,7 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
             Expanded(
               child: _sidePanelMode == _SidePanelMode.channels 
                   ? _buildChannelListView(theme) 
-                  : _buildCategoryListView(theme, homeController),
+                  : _buildCategoryListView(theme, widget.homeController),
             ),
             Padding(
               padding: const EdgeInsets.all(24.0),
@@ -480,7 +485,9 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
                   onPressed: () {
                     setState(() {
                       if (_sidePanelMode == _SidePanelMode.channels) {
-                        _sidePanelMode = _SidePanelMode.categories;
+                        if (widget.homeController != null) {
+                          _sidePanelMode = _SidePanelMode.categories;
+                        }
                       } else {
                         _sidePanelMode = _SidePanelMode.channels;
                       }
@@ -490,7 +497,7 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
                       ? Icons.explore_outlined 
                       : Icons.arrow_back_rounded),
                   label: Text(_sidePanelMode == _SidePanelMode.channels 
-                      ? 'Discover other categories' 
+                      ? (widget.homeController != null ? 'Discover other categories' : 'Categories not available')
                       : 'Back to channel list'),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: Colors.white70,
@@ -547,16 +554,32 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
             app_player_state.PlayerState.currentIndex = index;
             app_player_state.PlayerState.title = channel.name;
             widget.player.open(Media(channel.url));
-            // Keep panel open or close it? Existing behavior was close it.
-            // I'll stick to closing it for a better playback experience.
-            setState(() => _showSidePanel = false);
+            
+            // Ensure overlay is visible while new stream loads
+            setState(() {
+              _showSidePanel = false;
+              _isVisible = true;
+            });
+            _startHideTimer();
           },
         );
       },
     );
   }
 
-  Widget _buildCategoryListView(ThemeData theme, XtreamCodeHomeController homeController) {
+  Widget _buildCategoryListView(ThemeData theme, XtreamCodeHomeController? homeController) {
+    if (homeController == null) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(20.0),
+          child: Text(
+            'Categories not available for this playlist',
+            style: TextStyle(color: Colors.white54),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
+    }
     final categories = homeController.liveCategories ?? [];
     
     return ListView.builder(
@@ -579,7 +602,9 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
             // Switch back to channel view for the new category
             setState(() {
               _sidePanelMode = _SidePanelMode.channels;
+              _isVisible = true;
             });
+            _startHideTimer();
           },
         );
       },
