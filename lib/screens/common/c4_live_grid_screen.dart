@@ -75,7 +75,6 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen> {
                 const SizedBox(height: 20),
                 Expanded(
                   child: GridView.builder(
-                    focusNode: _gridFocusNode,
                     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 4,
                       childAspectRatio: 16 / 10,

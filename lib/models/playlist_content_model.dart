@@ -39,4 +39,7 @@ class ContentItem {
   }) {
     url = isXtreamCode ? buildMediaUrl(this) : m3uItem?.url ?? id;
   }
+
+  // NEW: Provide a unified image URL
+  String get imageUrl => imagePath.isNotEmpty ? imagePath : (coverPath ?? '');
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'c4_gradient_placeholder.dart';
 
@@ -12,6 +13,8 @@ class C4Card extends StatefulWidget {
   final List<Widget>? badges;
   final bool showProgress;
   final double? progress;
+  final ValueChanged<bool>? onFocusChanged;
+  final FocusNode? focusNode;
 
   const C4Card({
     super.key,
@@ -24,6 +27,8 @@ class C4Card extends StatefulWidget {
     this.badges,
     this.showProgress = false,
     this.progress,
+    this.onFocusChanged,
+    this.focusNode,
   });
 
   @override
@@ -39,7 +44,11 @@ class _C4CardState extends State<C4Card> {
     final isVOD = widget.height > widget.width;
 
     return Focus(
-      onFocusChange: (focused) => setState(() => _isFocused = focused),
+      focusNode: widget.focusNode,
+      onFocusChange: (focused) {
+        setState(() => _isFocused = focused);
+        widget.onFocusChanged?.call(focused);
+      },
       onKeyEvent: (node, event) {
         if (_isFocused && event is KeyDownEvent) {
           if (event.logicalKey.debugName == 'Select' || event.logicalKey.debugName == 'Enter') {

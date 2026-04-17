@@ -9,7 +9,7 @@ import 'main_shell_screen.dart';
 import 'common/c4_dashboard.dart';
 import 'common/c4_live_grid_screen.dart';
 import 'common/c4_content_grid_screen.dart';
-import 'common/c4_search_modal.dart';
+import '../widgets/common/c4_search_modal.dart';
 import 'xtream-codes/xtream_code_home_screen.dart';
 import 'm3u/m3u_home_screen.dart';
 import 'watch_history_screen.dart';

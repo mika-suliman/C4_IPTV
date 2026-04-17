@@ -4,6 +4,7 @@ import '../../controllers/xtream_code_home_controller.dart';
 import '../../widgets/common/c4_card.dart';
 import '../../l10n/localization_extension.dart';
 import '../../models/playlist_content_model.dart';
+import '../../models/category_view_model.dart';
 import '../../models/content_type.dart';
 import '../../utils/navigate_by_content_type.dart';
 

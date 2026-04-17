@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
-import '../../services/player_state.dart';
+import '../../services/player_state.dart' as app_player_state;
 
 class C4PlayerOverlay extends StatefulWidget {
   final Player player;
@@ -120,7 +120,7 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      PlayerState.title ?? 'Unknown Content',
+                      app_player_state.PlayerState.title ?? 'Unknown Content',
                       style: theme.textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
