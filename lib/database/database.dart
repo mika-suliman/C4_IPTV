@@ -1649,10 +1649,10 @@ class AppDatabase extends _$AppDatabase {
   ) async {
     await (delete(watchLaters)
           ..where(
-            (tbl) =>
-                tbl.playlistId.equals(playlistId) &
-                tbl.streamId.equals(streamId) &
-                tbl.contentType.equals(contentType.index),
+            (f) =>
+                f.playlistId.equals(playlistId) &
+                f.streamId.equals(streamId) &
+                f.contentType.equalsValue(contentType),
           ))
         .go();
   }
@@ -1713,6 +1713,11 @@ class AppDatabase extends _$AppDatabase {
         await m.addColumn(vodStreams, vodStreams.genre);
         await m.addColumn(vodStreams, vodStreams.youtubeTrailer);
         await m.createTable(watchLaters);
+      }
+
+      if (from < 9) {
+        // Defensive: ensure watch_laters table exists for all upgrade paths
+        await m.createTableIfNotExists(watchLaters);
       }
     },
   );

@@ -181,15 +181,15 @@ class _C4CardState extends State<C4Card> {
                                 ? Icons.schedule_rounded
                                 : Icons.schedule_outlined,
                             onPressed: () async {
+                              // Capture state BEFORE the toggle so the message is correct
+                              final wasInWatchLater = widget.isInWatchLater == true;
                               await widget.onToggleWatchLater!();
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
-                                    content: Text(
-                                      widget.isInWatchLater == true 
-                                        ? context.loc.removed_from_watch_later 
-                                        : context.loc.added_to_watch_later
-                                    ),
+                                    content: Text(wasInWatchLater
+                                        ? context.loc.removed_from_watch_later
+                                        : context.loc.added_to_watch_later),
                                     duration: const Duration(seconds: 2),
                                     behavior: SnackBarBehavior.floating,
                                     width: 250,
@@ -207,15 +207,15 @@ class _C4CardState extends State<C4Card> {
                                 ? Icons.favorite_rounded
                                 : Icons.favorite_border_rounded,
                             onPressed: () async {
+                              // Capture state BEFORE the toggle so the message is correct
+                              final wasFavorite = widget.isFavorite == true;
                               await widget.onToggleFavorite!();
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
-                                    content: Text(
-                                      widget.isFavorite == true 
-                                        ? context.loc.removed_from_favorites 
-                                        : context.loc.added_to_favorites
-                                    ),
+                                    content: Text(wasFavorite
+                                        ? context.loc.removed_from_favorites
+                                        : context.loc.added_to_favorites),
                                     duration: const Duration(seconds: 2),
                                     behavior: SnackBarBehavior.floating,
                                     width: 200,
