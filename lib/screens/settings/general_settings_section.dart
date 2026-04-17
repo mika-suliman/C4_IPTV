@@ -26,6 +26,7 @@ import '../playlist_screen.dart';
 import '../xtream-codes/xtream_code_data_loader_screen.dart';
 import 'category_settings_section.dart';
 import 'live_tv_settings_section.dart';
+import '../../utils/app_config.dart';
 
 final controller = XtreamCodeHomeController(true);
 
@@ -49,6 +50,8 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget> {
   bool _speedUpOnLongPress = true;
   bool _seekOnDoubleTap = true;
   String _appVersion = '';
+  final TextEditingController _tmdbKeyController = TextEditingController();
+  bool _obscureTmdbKey = true;
 
   @override
   void initState() {
@@ -75,6 +78,7 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget> {
         _speedUpOnLongPress = speedUpOnLongPress;
         _seekOnDoubleTap = seekOnDoubleTap;
         _appVersion = packageInfo.version;
+        _tmdbKeyController.text = AppConfig.tmdbApiKey;
         _isLoading = false;
       });
     } catch (e) {
@@ -82,6 +86,12 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget> {
         _isLoading = false;
       });
     }
+  }
+
+  @override
+  void dispose() {
+    _tmdbKeyController.dispose();
+    super.dispose();
   }
 
   Future<void> _saveBackgroundPlaySetting(bool value) async {
@@ -357,6 +367,34 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget> {
                       ),
                     ],
                   ],
+                ),
+              ),
+              const SizedBox(height: 10),
+              SectionTitleWidget(title: context.loc.integration),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: TextField(
+                    controller: _tmdbKeyController,
+                    obscureText: _obscureTmdbKey,
+                    decoration: InputDecoration(
+                      labelText: context.loc.tmdb_api_key,
+                      hintText: context.loc.enter_tmdb_api_key,
+                      icon: const Icon(Icons.api_rounded),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscureTmdbKey ? Icons.visibility_off : Icons.visibility,
+                        ),
+                        onPressed: () {
+                          setState(() => _obscureTmdbKey = !_obscureTmdbKey);
+                        },
+                      ),
+                      border: InputBorder.none,
+                    ),
+                    onChanged: (value) async {
+                      await AppConfig.setTmdbApiKey(value);
+                    },
+                  ),
                 ),
               ),
               const SizedBox(height: 10),

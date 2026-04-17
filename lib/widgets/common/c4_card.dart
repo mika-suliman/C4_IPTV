@@ -1,3 +1,4 @@
+import 'package:another_iptv_player/l10n/localization_extension.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -16,6 +17,12 @@ class C4Card extends StatefulWidget {
   final ValueChanged<bool>? onFocusChanged;
   final FocusNode? focusNode;
 
+  // New action properties
+  final bool? isFavorite;
+  final Future<void> Function()? onToggleFavorite;
+  final bool? isInWatchLater;
+  final Future<void> Function()? onToggleWatchLater;
+
   const C4Card({
     super.key,
     this.imageUrl,
@@ -29,6 +36,10 @@ class C4Card extends StatefulWidget {
     this.progress,
     this.onFocusChanged,
     this.focusNode,
+    this.isFavorite,
+    this.onToggleFavorite,
+    this.isInWatchLater,
+    this.onToggleWatchLater,
   });
 
   @override
@@ -150,7 +161,74 @@ class _C4CardState extends State<C4Card> {
                   Positioned(
                     top: 8,
                     right: 8,
-                    child: Row(children: widget.badges!),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: widget.badges!,
+                    ),
+                  ),
+
+                // Action Buttons (Top Right, above Badges if both exist)
+                if (widget.onToggleFavorite != null || widget.onToggleWatchLater != null)
+                  Positioned(
+                    top: 8,
+                    right: widget.badges != null ? 48.0 : 8.0, // Push left if badges exist
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (widget.onToggleWatchLater != null)
+                          _CircleIconButton(
+                            icon: widget.isInWatchLater == true
+                                ? Icons.schedule_rounded
+                                : Icons.schedule_outlined,
+                            onPressed: () async {
+                              await widget.onToggleWatchLater!();
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      widget.isInWatchLater == true 
+                                        ? context.loc.removed_from_watch_later 
+                                        : context.loc.added_to_watch_later
+                                    ),
+                                    duration: const Duration(seconds: 2),
+                                    behavior: SnackBarBehavior.floating,
+                                    width: 250,
+                                  ),
+                                );
+                              }
+                            },
+                            active: widget.isInWatchLater == true,
+                            activeColor: theme.colorScheme.secondary,
+                          ),
+                        if (widget.onToggleFavorite != null) ...[
+                          const SizedBox(width: 6),
+                          _CircleIconButton(
+                            icon: widget.isFavorite == true
+                                ? Icons.favorite_rounded
+                                : Icons.favorite_border_rounded,
+                            onPressed: () async {
+                              await widget.onToggleFavorite!();
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      widget.isFavorite == true 
+                                        ? context.loc.removed_from_favorites 
+                                        : context.loc.added_to_favorites
+                                    ),
+                                    duration: const Duration(seconds: 2),
+                                    behavior: SnackBarBehavior.floating,
+                                    width: 200,
+                                  ),
+                                );
+                              }
+                            },
+                            active: widget.isFavorite == true,
+                            activeColor: Colors.redAccent,
+                          ),
+                        ],
+                      ],
+                    ),
                   ),
 
                 // Progress Bar
@@ -171,6 +249,77 @@ class _C4CardState extends State<C4Card> {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CircleIconButton extends StatefulWidget {
+  final IconData icon;
+  final Future<void> Function() onPressed;
+  final bool active;
+  final Color activeColor;
+
+  const _CircleIconButton({
+    required this.icon,
+    required this.onPressed,
+    this.active = false,
+    required this.activeColor,
+  });
+
+  @override
+  State<_CircleIconButton> createState() => _CircleIconButtonState();
+}
+
+class _CircleIconButtonState extends State<_CircleIconButton> {
+  bool _isHovered = false;
+  bool _isLoading = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: GestureDetector(
+        onTap: () async {
+          if (_isLoading) return;
+          setState(() => _isLoading = true);
+          try {
+            await widget.onPressed();
+          } finally {
+            if (mounted) setState(() => _isLoading = false);
+          }
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            color: _isLoading
+                ? Colors.black.withValues(alpha: 0.3)
+                : (_isHovered
+                    ? Colors.white.withValues(alpha: 0.9)
+                    : Colors.black.withValues(alpha: 0.4)),
+            shape: BoxShape.circle,
+          ),
+          child: _isLoading
+              ? Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      widget.active ? widget.activeColor : Colors.white,
+                    ),
+                  ),
+                )
+              : Icon(
+                  widget.icon,
+                  size: 18,
+                  color: _isHovered
+                      ? (widget.active ? widget.activeColor : Colors.black87)
+                      : (widget.active ? widget.activeColor : Colors.white),
+                ),
         ),
       ),
     );

@@ -158,9 +158,10 @@ class _C4DashboardState extends State<C4Dashboard> {
                           ))
                       .toList(),
                   onItemTap: (ctx, item) {
-                    // Assuming watch later can be played using a similar logic
-                    // or just standard navigation if it's already full.
-                    navigateByContentType(ctx, item);
+                    final data = watchLaterController.watchLaterItems.firstWhere(
+                      (i) => i.streamId == item.id && i.contentType == item.contentType,
+                    );
+                    watchLaterController.playContent(ctx, data);
                   },
                 ),
               ),

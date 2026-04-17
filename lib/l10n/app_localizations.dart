@@ -1661,6 +1661,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Duration'**
   String get duration_label;
+
+  /// No description provided for @watch_later.
+  ///
+  /// In en, this message translates to:
+  /// **'Watch Later'**
+  String get watch_later;
+
+  /// No description provided for @watch_later_empty_message.
+  ///
+  /// In en, this message translates to:
+  /// **'Your watch later list is empty'**
+  String get watch_later_empty_message;
+
+  /// No description provided for @watch_later_empty_description.
+  ///
+  /// In en, this message translates to:
+  /// **'Save movies and shows to watch them later here.'**
+  String get watch_later_empty_description;
+
+  /// No description provided for @integration.
+  ///
+  /// In en, this message translates to:
+  /// **'Integration'**
+  String get integration;
+
+  /// No description provided for @tmdb_api_key.
+  ///
+  /// In en, this message translates to:
+  /// **'TMDB API Key'**
+  String get tmdb_api_key;
+
+  /// No description provided for @enter_tmdb_api_key.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your TMDB API Key'**
+  String get enter_tmdb_api_key;
+
+  /// No description provided for @added_to_watch_later.
+  ///
+  /// In en, this message translates to:
+  /// **'Added to Watch Later'**
+  String get added_to_watch_later;
+
+  /// No description provided for @removed_from_watch_later.
+  ///
+  /// In en, this message translates to:
+  /// **'Removed from Watch Later'**
+  String get removed_from_watch_later;
+
+  /// No description provided for @live_tv.
+  ///
+  /// In en, this message translates to:
+  /// **'Live TV'**
+  String get live_tv;
+
+  /// No description provided for @no_favorites_found.
+  ///
+  /// In en, this message translates to:
+  /// **'No favorites found'**
+  String get no_favorites_found;
 }
 
 class _AppLocalizationsDelegate

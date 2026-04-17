@@ -841,4 +841,35 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get duration_label => 'Süre';
+
+  @override
+  String get watch_later => 'Watch Later';
+
+  @override
+  String get watch_later_empty_message => 'Your watch later list is empty';
+
+  @override
+  String get watch_later_empty_description =>
+      'Save movies and shows to watch them later here.';
+
+  @override
+  String get integration => 'Integration';
+
+  @override
+  String get tmdb_api_key => 'TMDB API Key';
+
+  @override
+  String get enter_tmdb_api_key => 'Enter your TMDB API Key';
+
+  @override
+  String get added_to_watch_later => 'Added to Watch Later';
+
+  @override
+  String get removed_from_watch_later => 'Removed from Watch Later';
+
+  @override
+  String get live_tv => 'Live TV';
+
+  @override
+  String get no_favorites_found => 'No favorites found';
 }

@@ -289,5 +289,15 @@
   "series_content_type": "Series",
   "last_update": "Last Update",
   "minutes": "min",
-  "duration_label": "Duration"
+  "duration_label": "Duration",
+  "watch_later": "Watch Later",
+  "watch_later_empty_message": "Your watch later list is empty",
+  "watch_later_empty_description": "Save movies and shows to watch them later here.",
+  "integration": "Integration",
+  "tmdb_api_key": "TMDB API Key",
+  "enter_tmdb_api_key": "Enter your TMDB API Key",
+  "added_to_watch_later": "Added to Watch Later",
+  "removed_from_watch_later": "Removed from Watch Later",
+  "live_tv": "Live TV",
+  "no_favorites_found": "No favorites found"
 }

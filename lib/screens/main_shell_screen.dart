@@ -48,6 +48,7 @@ class _MainShellScreenState extends State<MainShellScreen> {
                 C4RailItem(icon: Icons.movie_outlined, label: 'Movies', route: '/movies'),
                 C4RailItem(icon: Icons.tv_outlined, label: 'Series', route: '/series'),
                 C4RailItem(icon: Icons.favorite_outline, label: 'Favorites', route: '/favorites'),
+                C4RailItem(icon: Icons.schedule_rounded, label: 'Watch Later', route: '/watch_later'),
                 C4RailItem(icon: Icons.settings_outlined, label: 'Settings', route: '/settings'),
               ],
               selectedIndex: widget.selectedIndex,

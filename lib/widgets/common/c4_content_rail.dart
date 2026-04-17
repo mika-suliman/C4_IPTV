@@ -1,5 +1,6 @@
-import 'dart:ui';
-import 'package:flutter/material.dart';
+import 'package:another_iptv_player/controllers/favorites_controller.dart';
+import 'package:another_iptv_player/controllers/watch_later_controller.dart';
+import 'package:provider/provider.dart';
 import '../../models/playlist_content_model.dart';
 import '../../utils/navigate_by_content_type.dart';
 import 'c4_card.dart';
@@ -96,6 +97,8 @@ class _C4ContentRailState extends State<C4ContentRail> {
     if (widget.items.isEmpty) return const SizedBox.shrink();
 
     final theme = Theme.of(context);
+    final favoritesController = context.watch<FavoritesController>();
+    final watchLaterController = context.watch<WatchLaterController>();
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -175,6 +178,14 @@ class _C4ContentRailState extends State<C4ContentRail> {
                               imageUrl: item.imageUrl,
                               width: cardWidth,
                               height: cardHeight,
+                              isFavorite: favoritesController.favorites.any(
+                                (f) => f.streamId == item.id && f.contentType == item.contentType,
+                              ),
+                              onToggleFavorite: () => favoritesController.toggleFavorite(item),
+                              isInWatchLater: watchLaterController.watchLaterItems.any(
+                                (w) => w.streamId == item.id && w.contentType == item.contentType,
+                              ),
+                              onToggleWatchLater: () => watchLaterController.toggleWatchLater(item),
                               onTap: () {
                                 if (widget.onItemTap != null) {
                                   widget.onItemTap!(context, item);

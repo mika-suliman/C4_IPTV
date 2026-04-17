@@ -15,6 +15,8 @@ import 'common/c4_content_grid_screen.dart';
 import '../widgets/common/c4_search_modal.dart';
 import 'm3u/m3u_home_screen.dart';
 import 'watch_history_screen.dart';
+import 'watch_later_screen.dart';
+import 'desktop/desktop_favorites_screen.dart';
 import 'xtream-codes/xtream_code_playlist_settings_screen.dart';
 
 class MainNavigationScreen extends StatefulWidget {
@@ -59,6 +61,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       case 4:
         return context.loc.favorites;
       case 5:
+        return context.loc.watch_later;
+      case 6:
         return context.loc.settings;
       default:
         return 'Another IPTV Player';
@@ -82,8 +86,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         case 3:
           return const C4ContentGridScreen(contentType: ContentType.series);
         case 4:
-          return WatchHistoryScreen(playlistId: widget.playlist.id);
+          return const DesktopFavoritesScreen();
         case 5:
+          return const WatchLaterScreen();
+        case 6:
           return XtreamCodePlaylistSettingsScreen(playlist: widget.playlist);
         default:
           return const SizedBox.shrink();
