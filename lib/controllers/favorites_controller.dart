@@ -1,8 +1,11 @@
-import 'package:flutter/foundation.dart';
-import 'package:another_iptv_player/models/content_type.dart';
 import 'package:another_iptv_player/models/favorite.dart';
 import 'package:another_iptv_player/models/playlist_content_model.dart';
 import 'package:another_iptv_player/repositories/favorites_repository.dart';
+import 'package:another_iptv_player/utils/navigate_by_content_type.dart';
+import 'package:another_iptv_player/utils/get_playlist_type.dart';
+import 'package:another_iptv_player/screens/series/episode_screen.dart';
+import 'package:another_iptv_player/screens/m3u/m3u_player_screen.dart';
+import 'package:flutter/material.dart';
 
 class FavoritesController extends ChangeNotifier {
   final FavoritesRepository _repository = FavoritesRepository();
@@ -171,6 +174,39 @@ class FavoritesController extends ChangeNotifier {
     } catch (e) {
       _setError('Favoriler temizlenirken hata oluştu: $e');
       return false;
+    }
+  }
+
+  Future<void> playFavorite(BuildContext context, Favorite favorite) async {
+    try {
+      _setError(null);
+      final contentItem = await _repository.getContentItemFromFavorite(favorite);
+
+      if (isXtreamCode) {
+        if (favorite.contentType == ContentType.series &&
+            favorite.episodeId != null) {
+          // If it's a specific episode, try to navigate to EpisodeScreen
+          // This requires fetching series info, similar to WatchHistoryController
+          // For now, if we can't easily fetch full series info here, 
+          // we fallback to standard navigation which might open SeriesDetail.
+          navigateByContentType(context, contentItem);
+        } else {
+          navigateByContentType(context, contentItem);
+        }
+      } else if (isM3u) {
+        if (favorite.contentType == ContentType.series) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => M3uPlayerScreen(contentItem: contentItem),
+            ),
+          );
+        } else {
+          navigateByContentType(context, contentItem);
+        }
+      }
+    } catch (e) {
+      _setError('Favori oynatılırken hata oluştu: $e');
     }
   }
 

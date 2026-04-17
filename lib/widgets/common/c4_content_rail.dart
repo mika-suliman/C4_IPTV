@@ -8,12 +8,14 @@ class C4ContentRail extends StatefulWidget {
   final String title;
   final List<ContentItem> items;
   final bool isPortrait;
+  final void Function(BuildContext, ContentItem)? onItemTap;
 
   const C4ContentRail({
     super.key,
     required this.title,
     required this.items,
     this.isPortrait = true,
+    this.onItemTap,
   });
 
   @override
@@ -98,7 +100,7 @@ class _C4ContentRailState extends State<C4ContentRail> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
-        const horizontalPadding = 40.0;
+        final horizontalPadding = width < 600 ? 16.0 : (width < 900 ? 24.0 : 48.0);
         const cardGap = 16.0;
 
         // Decide how many cards should be visible at once on desktop.
@@ -128,13 +130,16 @@ class _C4ContentRailState extends State<C4ContentRail> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
+              padding: EdgeInsets.symmetric(
+                horizontal: horizontalPadding,
+                vertical: 16,
+              ),
               child: Text(
                 widget.title,
                 style: theme.textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.bold,
                   letterSpacing: 0.5,
-                  fontSize: 22, // Slightly larger for desktop feel
+                  fontSize: width < 600 ? 18 : 22,
                 ),
               ),
             ),
@@ -154,7 +159,7 @@ class _C4ContentRailState extends State<C4ContentRail> {
                     ),
                     child: ListView.builder(
                       controller: _scrollController,
-                      padding: const EdgeInsets.symmetric(horizontal: 40),
+                      padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
                       scrollDirection: Axis.horizontal,
                       itemCount: widget.items.length,
                       clipBehavior: Clip.none,
@@ -170,7 +175,13 @@ class _C4ContentRailState extends State<C4ContentRail> {
                               imageUrl: item.imageUrl,
                               width: cardWidth,
                               height: cardHeight,
-                              onTap: () => navigateByContentType(context, item),
+                              onTap: () {
+                                if (widget.onItemTap != null) {
+                                  widget.onItemTap!(context, item);
+                                } else {
+                                  navigateByContentType(context, item);
+                                }
+                              },
                             ),
                           ),
                         );
