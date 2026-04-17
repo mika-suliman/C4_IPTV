@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'hover_scale_wrapper.dart';
 
 class C4Header extends StatelessWidget {
   final String title;
@@ -59,10 +60,13 @@ class C4Header extends StatelessWidget {
           ),
 
           if (onSearchTap != null)
-            IconButton(
-              icon: const Icon(Icons.search),
-              onPressed: onSearchTap,
-              tooltip: 'Search',
+            HoverScaleWrapper(
+              hoverScale: 1.02,
+              child: IconButton(
+                icon: const Icon(Icons.search),
+                onPressed: onSearchTap,
+                tooltip: 'Search',
+              ),
             ),
 
           const SizedBox(width: 16),

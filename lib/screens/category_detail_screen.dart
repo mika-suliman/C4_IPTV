@@ -7,6 +7,7 @@ import '../controllers/category_detail_controller.dart';
 import '../widgets/category_detail/category_app_bar.dart';
 import '../widgets/category_detail/content_states.dart';
 import '../widgets/category_detail/content_grid.dart';
+import '../widgets/common/hover_scale_wrapper.dart';
 
 class CategoryDetailScreen extends StatelessWidget {
   final CategoryViewModel category;
@@ -96,18 +97,24 @@ class _CategoryDetailViewState extends State<_CategoryDetailView> {
       scrollDirection: Axis.horizontal,
       child: Row(
         children: [
-          ChoiceChip(
-            label: Text(context.loc.all),
-            selected: controller.selectedGenre == null,
-            onSelected: (_) => controller.filterByGenre(null),
+          HoverScaleWrapper(
+            hoverScale: 1.02,
+            child: ChoiceChip(
+              label: Text(context.loc.all),
+              selected: controller.selectedGenre == null,
+              onSelected: (_) => controller.filterByGenre(null),
+            ),
           ),
           ...controller.genres.map(
             (g) => Padding(
               padding: const EdgeInsets.symmetric(horizontal: 4),
-              child: ChoiceChip(
-                label: Text(_capitalizeGenre(g)),
-                selected: controller.selectedGenre == g,
-                onSelected: (_) => controller.filterByGenre(g),
+              child: HoverScaleWrapper(
+                hoverScale: 1.02,
+                child: ChoiceChip(
+                  label: Text(_capitalizeGenre(g)),
+                  selected: controller.selectedGenre == g,
+                  onSelected: (_) => controller.filterByGenre(g),
+                ),
               ),
             ),
           ),
@@ -124,35 +131,47 @@ class _CategoryDetailViewState extends State<_CategoryDetailView> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              ListTile(
-                title: const Text('A → Z'),
-                onTap: () {
-                  controller.sortItems("ascending");
-                  Navigator.pop(context);
-                },
+              HoverScaleWrapper(
+                hoverScale: 1.02,
+                child: ListTile(
+                  title: const Text('A → Z'),
+                  onTap: () {
+                    controller.sortItems("ascending");
+                    Navigator.pop(context);
+                  },
+                ),
               ),
-              ListTile(
-                title: const Text('Z → A'),
-                onTap: () {
-                  controller.sortItems("descending");
-                  Navigator.pop(context);
-                },
+              HoverScaleWrapper(
+                hoverScale: 1.02,
+                child: ListTile(
+                  title: const Text('Z → A'),
+                  onTap: () {
+                    controller.sortItems("descending");
+                    Navigator.pop(context);
+                  },
+                ),
               ),
-              ListTile(
-                leading: const Icon(Icons.event),
-                title: Text(context.loc.release_date),
-                onTap: () {
-                  controller.sortItems("release_date");
-                  Navigator.pop(context);
-                },
+              HoverScaleWrapper(
+                hoverScale: 1.02,
+                child: ListTile(
+                  leading: const Icon(Icons.event),
+                  title: Text(context.loc.release_date),
+                  onTap: () {
+                    controller.sortItems("release_date");
+                    Navigator.pop(context);
+                  },
+                ),
               ),
-              ListTile(
-                leading: const Icon(Icons.star_rate),
-                title: Text(context.loc.rating),
-                onTap: () {
-                  controller.sortItems("rating");
-                  Navigator.pop(context);
-                },
+              HoverScaleWrapper(
+                hoverScale: 1.02,
+                child: ListTile(
+                  leading: const Icon(Icons.star_rate),
+                  title: Text(context.loc.rating),
+                  onTap: () {
+                    controller.sortItems("rating");
+                    Navigator.pop(context);
+                  },
+                ),
               ),
             ],
           ),

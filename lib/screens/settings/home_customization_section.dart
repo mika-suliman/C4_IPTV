@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../controllers/home_rails_controller.dart';
+import '../../widgets/common/hover_scale_wrapper.dart';
 import '../../l10n/localization_extension.dart';
 import '../../widgets/section_title_widget.dart';
 import '../../models/home_rail_config.dart';
@@ -64,13 +65,16 @@ class HomeCustomizationSection extends StatelessWidget {
           },
           itemBuilder: (context, index) {
             final rail = rails[index];
-            return ListTile(
-              key: ValueKey(rail.id),
-              leading: const Icon(Icons.drag_handle_rounded),
-              title: Text(_getRailLabel(context, rail.id)),
-              trailing: Switch(
-                value: rail.visible,
-                onChanged: (val) => controller.toggleRail(rail.id, val),
+            return HoverScaleWrapper(
+              hoverScale: 1.02,
+              child: ListTile(
+                key: ValueKey(rail.id),
+                leading: const Icon(Icons.drag_handle_rounded),
+                title: Text(_getRailLabel(context, rail.id)),
+                trailing: Switch(
+                  value: rail.visible,
+                  onChanged: (val) => controller.toggleRail(rail.id, val),
+                ),
               ),
             );
           },

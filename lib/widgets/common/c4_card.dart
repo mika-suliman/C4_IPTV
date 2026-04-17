@@ -46,212 +46,346 @@ class C4Card extends StatefulWidget {
   State<C4Card> createState() => _C4CardState();
 }
 
-class _C4CardState extends State<C4Card> {
+class _C4CardState extends State<C4Card> with SingleTickerProviderStateMixin {
   bool _isFocused = false;
+  bool _isHovered = false;
+
+  late AnimationController _controller;
+  late Animation<double> _scaleAnim;
+  late Animation<double> _glowAnim;
+  late Animation<double> _labelSlideAnim;
+  late Animation<double> _labelFadeAnim;
+  late Animation<double> _overlayFadeAnim;
+  late Animation<double> _innerShadowAnim;
+
+  bool get _isActive => _isFocused || _isHovered;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 220),
+    );
+
+    _scaleAnim = Tween<double>(begin: 1.0, end: 1.07).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
+    );
+    _glowAnim = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
+    );
+    _labelSlideAnim = Tween<double>(begin: 6.0, end: 0.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
+    );
+    _labelFadeAnim = Tween<double>(begin: 0.7, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
+    );
+    _overlayFadeAnim = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
+    );
+    _innerShadowAnim = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _activate() {
+    _controller.forward();
+  }
+
+  void _deactivate() {
+    _controller.reverse();
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isVOD = (widget.height ?? 1.5) >= (widget.width ?? 1.0);
+    final primaryColor = theme.colorScheme.primary;
 
     return Focus(
       focusNode: widget.focusNode,
       onFocusChange: (focused) {
         setState(() => _isFocused = focused);
+        focused ? _activate() : (!_isHovered ? _deactivate() : null);
         widget.onFocusChanged?.call(focused);
       },
       onKeyEvent: (node, event) {
         if (_isFocused && event is KeyDownEvent) {
-          if (event.logicalKey.debugName == 'Select' || event.logicalKey.debugName == 'Enter') {
+          if (event.logicalKey == LogicalKeyboardKey.select || event.logicalKey == LogicalKeyboardKey.enter) {
             widget.onTap?.call();
             return KeyEventResult.handled;
           }
         }
         return KeyEventResult.ignored;
       },
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: AnimatedScale(
-          scale: _isFocused ? 1.05 : 1.0,
-          duration: const Duration(milliseconds: 200),
-          curve: Curves.easeOutCubic,
-          child: Container(
-            width: widget.width,
-            height: widget.height,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: _isFocused
-                  ? [
+      child: MouseRegion(
+        onEnter: (_) {
+          setState(() => _isHovered = true);
+          _activate();
+        },
+        onExit: (_) {
+          setState(() => _isHovered = false);
+          if (!_isFocused) _deactivate();
+        },
+        cursor: SystemMouseCursors.click,
+        child: GestureDetector(
+          onTap: widget.onTap,
+          child: AnimatedBuilder(
+            animation: _controller,
+            builder: (context, child) {
+              return Transform.scale(
+                scale: _scaleAnim.value,
+                child: Container(
+                  width: widget.width,
+                  height: widget.height,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      // Base shadow always present
                       BoxShadow(
-                        color: theme.colorScheme.primary.withValues(alpha: 0.3),
-                        blurRadius: 20,
-                        spreadRadius: 2,
-                      )
-                    ]
-                  : null,
-              border: Border.all(
-                color: _isFocused ? theme.colorScheme.primary : Colors.transparent,
-                width: 2,
-              ),
-            ),
-            clipBehavior: Clip.antiAlias,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                // Image or Placeholder
-                if (widget.imageUrl != null && widget.imageUrl!.isNotEmpty)
-                  CachedNetworkImage(
-                    imageUrl: widget.imageUrl!,
-                    fit: BoxFit.cover,
-                    placeholder: (context, url) => const C4GradientPlaceholder(),
-                    errorWidget: (context, url, error) => const C4GradientPlaceholder(),
-                  )
-                else
-                  const C4GradientPlaceholder(),
-
-                // Scrim overlay for text readability
-                Positioned.fill(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.transparent,
-                          Colors.black.withValues(alpha: 0.1),
-                          Colors.black.withValues(alpha: 0.8),
-                        ],
-                        stops: const [0.5, 0.7, 1.0],
+                        color: Colors.black.withValues(alpha: 0.25),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
                       ),
+                      // Glow shadow that fades in on hover/focus
+                      BoxShadow(
+                        color: primaryColor.withValues(
+                          alpha: 0.45 * _glowAnim.value,
+                        ),
+                        blurRadius: 20 * _glowAnim.value,
+                        spreadRadius: 2 * _glowAnim.value,
+                      ),
+                    ],
+                    border: Border.all(
+                      color: primaryColor.withValues(
+                        alpha: _glowAnim.value * 0.9,
+                      ),
+                      width: 2,
                     ),
                   ),
-                ),
-
-                // Content
-                Padding(
-                  padding: const EdgeInsets.all(12.0),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  clipBehavior: Clip.antiAlias,
+                  child: Stack(
+                    fit: StackFit.expand,
                     children: [
-                      Text(
-                        widget.title,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.bodyLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
+                      // Image with subtle zoom
+                      Transform.scale(
+                        scale: 1.0 + 0.04 * _controller.value,
+                        child: _buildImage(),
                       ),
-                      if (widget.subtitle != null) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          widget.subtitle!,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
+
+                      // Scrim - darkens slightly more on hover for text contrast
+                      Positioned.fill(
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.transparent,
+                                Colors.black.withValues(
+                                  alpha: 0.1 + 0.15 * _controller.value,
+                                ),
+                                Colors.black.withValues(
+                                  alpha: 0.75 + 0.1 * _controller.value,
+                                ),
+                              ],
+                              stops: const [0.45, 0.65, 1.0],
+                            ),
                           ),
                         ),
-                      ],
+                      ),
+
+                      // Shine sweep overlay on hover
+                      Positioned.fill(
+                        child: Opacity(
+                          opacity: _overlayFadeAnim.value * 0.08,
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: const [
+                                  Colors.white,
+                                  Colors.transparent,
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      // Inner vignette shadow — fills in on hover
+                      Positioned.fill(
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(16),
+                            gradient: RadialGradient(
+                              center: Alignment.center,
+                              radius: 1.0,
+                              colors: [
+                                Colors.transparent,
+                                Colors.black.withValues(
+                                  alpha: 0.55 * _innerShadowAnim.value,
+                                ),
+                              ],
+                              stops: const [0.45, 1.0],
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      // Title + subtitle slide up on hover
+                      Padding(
+                        padding: const EdgeInsets.all(12.0),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Transform.translate(
+                              offset: Offset(0, _labelSlideAnim.value),
+                              child: Opacity(
+                                opacity: _labelFadeAnim.value,
+                                child: Text(
+                                  widget.title,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: theme.textTheme.bodyLarge?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            if (widget.subtitle != null) ...[
+                              const SizedBox(height: 4),
+                              Transform.translate(
+                                offset: Offset(
+                                  0,
+                                  _labelSlideAnim.value * 1.3,
+                                ),
+                                child: Opacity(
+                                  opacity: _labelFadeAnim.value * 0.85,
+                                  child: Text(
+                                    widget.subtitle!,
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color: theme.colorScheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+
+                      // Badges
+                      if (widget.badges != null)
+                        Positioned(
+                          top: 8,
+                          right: 8,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: widget.badges!,
+                          ),
+                        ),
+
+                      // Action buttons (keep existing _CircleIconButton logic)
+                      if (widget.onToggleFavorite != null || widget.onToggleWatchLater != null)
+                        Positioned(
+                          top: 8,
+                          right: widget.badges != null ? 48.0 : 8.0,
+                          child: AnimatedOpacity(
+                            opacity: _isActive ? 1.0 : 0.0,
+                            duration: const Duration(milliseconds: 180),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (widget.onToggleWatchLater != null)
+                                  _CircleIconButton(
+                                    icon: widget.isInWatchLater == true ? Icons.schedule_rounded : Icons.schedule_outlined,
+                                    onPressed: () async {
+                                      final was = widget.isInWatchLater == true;
+                                      await widget.onToggleWatchLater!();
+                                      if (context.mounted) {
+                                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                          content: Text(was ? context.loc.removed_from_watch_later : context.loc.added_to_watch_later),
+                                          duration: const Duration(seconds: 2),
+                                          behavior: SnackBarBehavior.floating,
+                                          width: 250,
+                                        ));
+                                      }
+                                    },
+                                    active: widget.isInWatchLater == true,
+                                    activeColor: theme.colorScheme.secondary,
+                                  ),
+                                if (widget.onToggleFavorite != null) ...[
+                                  const SizedBox(width: 6),
+                                  _CircleIconButton(
+                                    icon: widget.isFavorite == true ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                                    onPressed: () async {
+                                      final was = widget.isFavorite == true;
+                                      await widget.onToggleFavorite!();
+                                      if (context.mounted) {
+                                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                          content: Text(was ? context.loc.removed_from_favorites : context.loc.added_to_favorites),
+                                          duration: const Duration(seconds: 2),
+                                          behavior: SnackBarBehavior.floating,
+                                          width: 200,
+                                        ));
+                                      }
+                                    },
+                                    active: widget.isFavorite == true,
+                                    activeColor: Colors.redAccent,
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ),
+
+                      // Progress bar (keep existing)
+                      if (widget.showProgress && widget.progress != null)
+                        Positioned(
+                          bottom: 0,
+                          left: 0,
+                          right: 0,
+                          child: SizedBox(
+                            height: 4,
+                            child: LinearProgressIndicator(
+                              value: widget.progress,
+                              backgroundColor: Colors.white24,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                theme.colorScheme.secondary,
+                              ),
+                            ),
+                          ),
+                        ),
                     ],
                   ),
                 ),
-
-                // Badges
-                if (widget.badges != null)
-                  Positioned(
-                    top: 8,
-                    right: 8,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: widget.badges!,
-                    ),
-                  ),
-
-                // Action Buttons (Top Right, above Badges if both exist)
-                if (widget.onToggleFavorite != null || widget.onToggleWatchLater != null)
-                  Positioned(
-                    top: 8,
-                    right: widget.badges != null ? 48.0 : 8.0, // Push left if badges exist
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (widget.onToggleWatchLater != null)
-                          _CircleIconButton(
-                            icon: widget.isInWatchLater == true
-                                ? Icons.schedule_rounded
-                                : Icons.schedule_outlined,
-                            onPressed: () async {
-                              // Capture state BEFORE the toggle so the message is correct
-                              final wasInWatchLater = widget.isInWatchLater == true;
-                              await widget.onToggleWatchLater!();
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(wasInWatchLater
-                                        ? context.loc.removed_from_watch_later
-                                        : context.loc.added_to_watch_later),
-                                    duration: const Duration(seconds: 2),
-                                    behavior: SnackBarBehavior.floating,
-                                    width: 250,
-                                  ),
-                                );
-                              }
-                            },
-                            active: widget.isInWatchLater == true,
-                            activeColor: theme.colorScheme.secondary,
-                          ),
-                        if (widget.onToggleFavorite != null) ...[
-                          const SizedBox(width: 6),
-                          _CircleIconButton(
-                            icon: widget.isFavorite == true
-                                ? Icons.favorite_rounded
-                                : Icons.favorite_border_rounded,
-                            onPressed: () async {
-                              // Capture state BEFORE the toggle so the message is correct
-                              final wasFavorite = widget.isFavorite == true;
-                              await widget.onToggleFavorite!();
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(wasFavorite
-                                        ? context.loc.removed_from_favorites
-                                        : context.loc.added_to_favorites),
-                                    duration: const Duration(seconds: 2),
-                                    behavior: SnackBarBehavior.floating,
-                                    width: 200,
-                                  ),
-                                );
-                              }
-                            },
-                            active: widget.isFavorite == true,
-                            activeColor: Colors.redAccent,
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-
-                // Progress Bar
-                if (widget.showProgress && widget.progress != null)
-                  Positioned(
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    child: SizedBox(
-                      height: 4,
-                      child: LinearProgressIndicator(
-                        value: widget.progress,
-                        backgroundColor: Colors.white24,
-                        valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.secondary),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
+              );
+            },
           ),
         ),
       ),
     );
+  }
+
+  Widget _buildImage() {
+    if (widget.imageUrl != null && widget.imageUrl!.isNotEmpty) {
+      return CachedNetworkImage(
+        imageUrl: widget.imageUrl!,
+        fit: BoxFit.cover,
+        placeholder: (context, url) => const C4GradientPlaceholder(),
+        errorWidget: (context, url, error) => const C4GradientPlaceholder(),
+      );
+    }
+    return const C4GradientPlaceholder();
   }
 }
 

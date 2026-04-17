@@ -1,5 +1,6 @@
 import 'package:another_iptv_player/database/database.dart';
 import 'package:another_iptv_player/screens/settings/subtitle_settings_section.dart';
+import 'package:another_iptv_player/widgets/common/hover_scale_wrapper.dart';
 import 'package:another_iptv_player/screens/settings/parental_controls_screen.dart';
 import 'package:another_iptv_player/services/service_locator.dart';
 import 'package:another_iptv_player/utils/get_playlist_type.dart';
@@ -116,21 +117,24 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Card(
-                child: ListTile(
-                  leading: const Icon(Icons.home),
-                  title: Text(context.loc.playlist_list),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () async {
-                    await UserPreferences.removeLastPlaylist();
-                    if (mounted) {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => PlaylistScreen(),
-                        ),
-                      );
-                    }
-                  },
+                child: HoverScaleWrapper(
+                  hoverScale: 1.02,
+                  child: ListTile(
+                    leading: const Icon(Icons.home),
+                    title: Text(context.loc.playlist_list),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () async {
+                      await UserPreferences.removeLastPlaylist();
+                      if (mounted) {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => PlaylistScreen(),
+                          ),
+                        );
+                      }
+                    },
+                  ),
                 ),
               ),
               const SizedBox(height: 10),
@@ -138,63 +142,69 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget> {
               Card(
                 child: Column(
                   children: [
-                    ListTile(
-                      leading: const Icon(Icons.refresh),
-                      title: Text(context.loc.refresh_contents),
-                      trailing: const Icon(Icons.cloud_download),
-                      onTap: () {
-                        if (isXtreamCode) {
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => XtreamCodeDataLoaderScreen(
-                                playlist: AppState.currentPlaylist!,
-                                refreshAll: true,
+                    HoverScaleWrapper(
+                      hoverScale: 1.02,
+                      child: ListTile(
+                        leading: const Icon(Icons.refresh),
+                        title: Text(context.loc.refresh_contents),
+                        trailing: const Icon(Icons.cloud_download),
+                        onTap: () {
+                          if (isXtreamCode) {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => XtreamCodeDataLoaderScreen(
+                                  playlist: AppState.currentPlaylist!,
+                                  refreshAll: true,
+                                ),
                               ),
-                            ),
-                          );
-                        }
+                            );
+                          }
 
-                        if (isM3u) {
-                          refreshM3uPlaylist();
-                        }
-                      },
+                          if (isM3u) {
+                            refreshM3uPlaylist();
+                          }
+                        },
+                      ),
                     ),
                     if (isXtreamCode) const Divider(height: 1),
                     if (isXtreamCode)
-                      ListTile(
-                        leading: const Icon(Icons.subtitles_outlined),
-                        title: Text(context.loc.hide_category),
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: () async {
-                          final result = await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => CategorySettingsScreen(
-                                controller: controller,
-                              ),
-                            ),
-                          );
-
-                          if (result == true) {
-                            if (isXtreamCode) {
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      XtreamCodeDataLoaderScreen(
-                                        playlist: AppState.currentPlaylist!,
-                                        refreshAll: true,
-                                      ),
+                      HoverScaleWrapper(
+                        hoverScale: 1.02,
+                        child: ListTile(
+                          leading: const Icon(Icons.subtitles_outlined),
+                          title: Text(context.loc.hide_category),
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: () async {
+                            final result = await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => CategorySettingsScreen(
+                                  controller: controller,
                                 ),
-                              );
-                            }
+                              ),
+                            );
 
-                            if (isM3u) {
-                              refreshM3uPlaylist();
+                            if (result == true) {
+                              if (isXtreamCode) {
+                                Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        XtreamCodeDataLoaderScreen(
+                                          playlist: AppState.currentPlaylist!,
+                                          refreshAll: true,
+                                        ),
+                                  ),
+                                );
+                              }
+
+                              if (isM3u) {
+                                refreshM3uPlaylist();
+                              }
                             }
-                          }
-                        },
+                          },
+                        ),
                       ),
                     const Divider(height: 1),
                     DropdownTileWidget<Locale>(
@@ -245,18 +255,21 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget> {
                       },
                     ),
                     const Divider(height: 1),
-                    ListTile(
-                      leading: const Icon(Icons.lock_outline),
-                      title: const Text('Parental Controls'),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const ParentalControlsScreen(),
-                          ),
-                        );
-                      },
+                    HoverScaleWrapper(
+                      hoverScale: 1.02,
+                      child: ListTile(
+                        leading: const Icon(Icons.lock_outline),
+                        title: const Text('Parental Controls'),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const ParentalControlsScreen(),
+                            ),
+                          );
+                        },
+                      ),
                     ),
                   ],
                 ),
@@ -276,20 +289,23 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget> {
                       onChanged: _saveBackgroundPlaySetting,
                     ),
                     const Divider(height: 1),
-                    ListTile(
-                      leading: const Icon(Icons.subtitles_outlined),
-                      title: Text(context.loc.subtitle_settings),
-                      subtitle: Text(context.loc.subtitle_settings_description),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                const SubtitleSettingsScreen(),
-                          ),
-                        );
-                      },
+                    HoverScaleWrapper(
+                      hoverScale: 1.02,
+                      child: ListTile(
+                        leading: const Icon(Icons.subtitles_outlined),
+                        title: Text(context.loc.subtitle_settings),
+                        subtitle: Text(context.loc.subtitle_settings_description),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  const SubtitleSettingsScreen(),
+                            ),
+                          );
+                        },
+                      ),
                     ),
                     // Player gesture settings - Only show on mobile platforms (Android & iOS)
                     if (Theme.of(context).platform == TargetPlatform.android ||
@@ -413,23 +429,26 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget> {
                       dense: true,
                     ),
                     const Divider(height: 1),
-                    ListTile(
-                      leading: const Icon(Icons.code),
-                      title: Text(context.loc.support_on_github),
-                      subtitle: Text(context.loc.support_on_github_description),
-                      trailing: const Icon(Icons.open_in_new, size: 18),
-                      dense: true,
-                      onTap: () async {
-                        final url = Uri.parse(
-                          'https://github.com/bsogulcan/another-iptv-player',
-                        );
-                        if (await canLaunchUrl(url)) {
-                          await launchUrl(
-                            url,
-                            mode: LaunchMode.externalApplication,
+                    HoverScaleWrapper(
+                      hoverScale: 1.02,
+                      child: ListTile(
+                        leading: const Icon(Icons.code),
+                        title: Text(context.loc.support_on_github),
+                        subtitle: Text(context.loc.support_on_github_description),
+                        trailing: const Icon(Icons.open_in_new, size: 18),
+                        dense: true,
+                        onTap: () async {
+                          final url = Uri.parse(
+                            'https://github.com/bsogulcan/another-iptv-player',
                           );
-                        }
-                      },
+                          if (await canLaunchUrl(url)) {
+                            await launchUrl(
+                              url,
+                              mode: LaunchMode.externalApplication,
+                            );
+                          }
+                        },
+                      ),
                     ),
                   ],
                 ),

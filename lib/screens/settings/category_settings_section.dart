@@ -4,7 +4,7 @@ import 'package:another_iptv_player/l10n/localization_extension.dart';
 import '../../widgets/color_picker_tile_widget.dart';
 import '../../widgets/dropdown_tile_widget.dart';
 import '../../widgets/slider_tile_widget.dart';
-import 'package:flutter/material.dart';
+import '../../widgets/common/hover_scale_wrapper.dart';
 import 'package:provider/provider.dart';
 import '../../controllers/xtream_code_home_controller.dart';
 
@@ -93,9 +93,12 @@ class _CategorySettingsScreenState extends State<CategorySettingsScreen> {
             builder: (context, controller, _) {
               return ListView(
                 children: [
-                  ListTile(
-                    title: Text(context.loc.live),
-                    tileColor: Colors.black12,
+                  HoverScaleWrapper(
+                    hoverScale: 1.02,
+                    child: ListTile(
+                      title: Text(context.loc.live),
+                      tileColor: Colors.black12,
+                    ),
                   ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
@@ -124,18 +127,24 @@ class _CategorySettingsScreenState extends State<CategorySettingsScreen> {
                     final isHidden = _hiddenCategories.contains(
                       cat.category.categoryId,
                     );
-                    return SwitchListTile(
-                      title: Text(cat.category.categoryName),
-                      value: !isHidden,
-                      onChanged: (val) =>
-                          _toggleHidden(val, cat.category.categoryId),
+                    return HoverScaleWrapper(
+                      hoverScale: 1.02,
+                      child: SwitchListTile(
+                        title: Text(cat.category.categoryName),
+                        value: !isHidden,
+                        onChanged: (val) =>
+                            _toggleHidden(val, cat.category.categoryId),
+                      ),
                     );
                   }),
 
                   const Divider(),
-                  ListTile(
-                    title: Text(context.loc.movies),
-                    tileColor: Colors.black12,
+                  HoverScaleWrapper(
+                    hoverScale: 1.02,
+                    child: ListTile(
+                      title: Text(context.loc.movies),
+                      tileColor: Colors.black12,
+                    ),
                   ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
@@ -164,18 +173,24 @@ class _CategorySettingsScreenState extends State<CategorySettingsScreen> {
                     final isHidden = _hiddenCategories.contains(
                       cat.category.categoryId,
                     );
-                    return SwitchListTile(
-                      title: Text(cat.category.categoryName),
-                      value: !isHidden,
-                      onChanged: (val) =>
-                          _toggleHidden(val, cat.category.categoryId),
+                    return HoverScaleWrapper(
+                      hoverScale: 1.02,
+                      child: SwitchListTile(
+                        title: Text(cat.category.categoryName),
+                        value: !isHidden,
+                        onChanged: (val) =>
+                            _toggleHidden(val, cat.category.categoryId),
+                      ),
                     );
                   }),
 
                   const Divider(),
-                  ListTile(
-                    title: Text(context.loc.series_plural),
-                    tileColor: Colors.black12,
+                  HoverScaleWrapper(
+                    hoverScale: 1.02,
+                    child: ListTile(
+                      title: Text(context.loc.series_plural),
+                      tileColor: Colors.black12,
+                    ),
                   ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
@@ -204,11 +219,14 @@ class _CategorySettingsScreenState extends State<CategorySettingsScreen> {
                     final isHidden = _hiddenCategories.contains(
                       cat.category.categoryId,
                     );
-                    return SwitchListTile(
-                      title: Text(cat.category.categoryName),
-                      value: !isHidden,
-                      onChanged: (val) =>
-                          _toggleHidden(val, cat.category.categoryId),
+                    return HoverScaleWrapper(
+                      hoverScale: 1.02,
+                      child: SwitchListTile(
+                        title: Text(cat.category.categoryName),
+                        value: !isHidden,
+                        onChanged: (val) =>
+                            _toggleHidden(val, cat.category.categoryId),
+                      ),
                     );
                   }),
                 ],

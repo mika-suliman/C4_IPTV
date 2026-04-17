@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:another_iptv_player/models/playlist_content_model.dart';
 import 'package:another_iptv_player/models/content_type.dart';
 import 'package:another_iptv_player/utils/responsive_helper.dart';
+import 'common/hover_scale_wrapper.dart';
 
 class ContentCard extends StatefulWidget {
   final ContentItem content;
@@ -173,16 +174,9 @@ class _ContentCardState extends State<ContentCard> {
 
     // Desktop: wrap with hover effects
     if (isDesktop) {
-      return MouseRegion(
-        onEnter: (_) => setState(() => _isHovered = true),
-        onExit: (_) => setState(() => _isHovered = false),
-        cursor: SystemMouseCursors.click,
-        child: AnimatedScale(
-          scale: _isHovered ? 1.05 : 1.0,
-          duration: const Duration(milliseconds: 200),
-          curve: Curves.easeOut,
-          child: cardWidget,
-        ),
+      return HoverScaleWrapper(
+        hoverScale: 1.02,
+        child: cardWidget,
       );
     }
 

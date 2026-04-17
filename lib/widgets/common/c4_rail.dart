@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'hover_scale_wrapper.dart';
 
 class C4RailItem {
   final IconData icon;
@@ -83,44 +84,46 @@ class _C4RailState extends State<C4Rail> {
                   },
                   child: GestureDetector(
                     onTap: () => widget.onItemSelected(index),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      margin: const EdgeInsets.symmetric(horizontal: 12),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? theme.colorScheme.primary.withValues(alpha: 0.1)
-                            : isFocused
-                                ? theme.colorScheme.onSurface.withValues(alpha: 0.05)
-                                : Colors.transparent,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: isFocused ? theme.colorScheme.primary : Colors.transparent,
-                          width: 2,
-                        ),
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            item.icon,
-                            color: isSelected || isFocused
-                                ? theme.colorScheme.primary
-                                : theme.colorScheme.onSurfaceVariant,
-                            size: 28,
+                    child: HoverScaleWrapper(
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        margin: const EdgeInsets.symmetric(horizontal: 12),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? theme.colorScheme.primary.withValues(alpha: 0.1)
+                              : isFocused
+                                  ? theme.colorScheme.onSurface.withValues(alpha: 0.05)
+                                  : Colors.transparent,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: isFocused ? theme.colorScheme.primary : Colors.transparent,
+                            width: 2,
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            item.label,
-                            textAlign: TextAlign.center,
-                            style: theme.textTheme.labelSmall?.copyWith(
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              item.icon,
                               color: isSelected || isFocused
                                   ? theme.colorScheme.primary
                                   : theme.colorScheme.onSurfaceVariant,
-                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                              size: 28,
                             ),
-                          ),
-                        ],
+                            const SizedBox(height: 4),
+                            Text(
+                              item.label,
+                              textAlign: TextAlign.center,
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: isSelected || isFocused
+                                    ? theme.colorScheme.primary
+                                    : theme.colorScheme.onSurfaceVariant,
+                                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
