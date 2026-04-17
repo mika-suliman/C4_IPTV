@@ -9,12 +9,31 @@ import '../screens/movies/movie_screen.dart';
 import '../screens/series/series_screen.dart';
 import '../screens/desktop/desktop_movie_detail_screen.dart';
 import '../screens/desktop/desktop_series_detail_screen.dart';
+import 'package:provider/provider.dart';
+import '../controllers/xtream_code_home_controller.dart';
 
 bool _isDesktop(BuildContext context) {
   return MediaQuery.of(context).size.width >= 900;
 }
 
 void navigateByContentType(BuildContext context, ContentItem content) {
+  XtreamCodeHomeController? xtreamHomeController;
+  try {
+    xtreamHomeController = context.read<XtreamCodeHomeController>();
+  } catch (_) {
+    xtreamHomeController = null;
+  }
+
+  Widget wrapWithProvider(Widget child) {
+    if (xtreamHomeController != null) {
+      return ChangeNotifierProvider.value(
+        value: xtreamHomeController,
+        child: child,
+      );
+    }
+    return child;
+  }
+
   if (isM3u &&
       ((content.m3uItem != null && content.m3uItem!.groupTitle == null) ||
           content.contentType == ContentType.series)) {
@@ -43,7 +62,7 @@ void navigateByContentType(BuildContext context, ContentItem content) {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => LiveStreamScreen(content: content),
+          builder: (context) => wrapWithProvider(LiveStreamScreen(content: content)),
         ),
       );
     case ContentType.vod:
@@ -52,14 +71,14 @@ void navigateByContentType(BuildContext context, ContentItem content) {
           context,
           MaterialPageRoute(
             builder: (context) =>
-                DesktopMovieDetailScreen(contentItem: content),
+                wrapWithProvider(DesktopMovieDetailScreen(contentItem: content)),
           ),
         );
       } else {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => MovieScreen(contentItem: content),
+            builder: (context) => wrapWithProvider(MovieScreen(contentItem: content)),
           ),
         );
       }
@@ -70,14 +89,14 @@ void navigateByContentType(BuildContext context, ContentItem content) {
             context,
             MaterialPageRoute(
               builder: (context) =>
-                  DesktopSeriesDetailScreen(contentItem: content),
+                  wrapWithProvider(DesktopSeriesDetailScreen(contentItem: content)),
             ),
           );
         } else {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => SeriesScreen(contentItem: content),
+              builder: (context) => wrapWithProvider(SeriesScreen(contentItem: content)),
             ),
           );
         }
@@ -85,7 +104,7 @@ void navigateByContentType(BuildContext context, ContentItem content) {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => M3uSeriesScreen(contentItem: content),
+            builder: (context) => wrapWithProvider(M3uSeriesScreen(contentItem: content)),
           ),
         );
       }
