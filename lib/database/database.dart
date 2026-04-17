@@ -1649,7 +1649,7 @@ class AppDatabase extends _$AppDatabase {
       await m.createAll();
     },
     onUpgrade: (Migrator m, int from, int to) async {
-      if (from <= 2) {
+      if (from < 2) {
         await m.createTable(categories);
         await m.createTable(userInfos);
         await m.createTable(serverInfos);
@@ -1669,7 +1669,7 @@ class AppDatabase extends _$AppDatabase {
         await m.createTable(watchHistories);
       }
 
-      if (from <= 3) {
+      if (from < 3) {
         await customStatement('''
             UPDATE playlists 
             SET type = 'PlaylistType.xtream' 
@@ -1677,25 +1677,25 @@ class AppDatabase extends _$AppDatabase {
           ''');
       }
 
-      if (from <= 4) {
+      if (from < 4) {
         await m.createTable(m3uItems);
       }
 
-      if (from <= 5) {
+      if (from < 5) {
         await m.createTable(m3uSeries);
         await m.createTable(m3uEpisodes);
       }
 
-      if (from <= 6) {
+      if (from < 6) {
         await m.deleteTable('m3u_items');
         await m.createTable(m3uItems);
       }
 
-      if (from <= 7) {
+      if (from < 7) {
         await m.createTable(favorites);
       }
 
-      if (from <= 8) {
+      if (from < 8) {
         await m.addColumn(vodStreams, vodStreams.genre);
         await m.addColumn(vodStreams, vodStreams.youtubeTrailer);
         await m.createTable(watchLaters);
