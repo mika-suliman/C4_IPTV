@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../controllers/xtream_code_home_controller.dart';
 import '../../controllers/watch_history_controller.dart';
 import '../../controllers/favorites_controller.dart';
@@ -29,6 +30,7 @@ class _C4DashboardState extends State<C4Dashboard> {
   final TmdbService _tmdbService = TmdbService();
   List<ContentItem> _trendingMovies = [];
   List<ContentItem> _trendingSeries = [];
+  String? _lastPrecachedHeroId;
 
   @override
   void initState() {
@@ -83,6 +85,16 @@ class _C4DashboardState extends State<C4Dashboard> {
     final favoritesController = context.watch<FavoritesController>();
     final watchLaterController = context.watch<WatchLaterController>();
     final homeRailsController = context.watch<HomeRailsController>();
+
+    // Pre-warm hero image into cache immediately after item is resolved
+    final heroItem = xtreamController.heroItem;
+    if (heroItem != null && heroItem.imageUrl.isNotEmpty && heroItem.id != _lastPrecachedHeroId) {
+      _lastPrecachedHeroId = heroItem.id;
+      precacheImage(
+        CachedNetworkImageProvider(heroItem.imageUrl),
+        context,
+      );
+    }
 
     return LayoutBuilder(
       builder: (context, constraints) {

@@ -25,6 +25,8 @@ class C4DashboardHero extends StatelessWidget {
               imageUrl: item.imageUrl,
               fit: BoxFit.cover,
               alignment: Alignment.topCenter,
+              fadeInDuration: const Duration(milliseconds: 400),
+              placeholder: (context, url) => const _HeroShimmer(),
               errorWidget: (context, url, error) => const DecoratedBox(
                 decoration: BoxDecoration(color: Colors.black45),
               ),
@@ -122,6 +124,59 @@ class C4DashboardHero extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _HeroShimmer extends StatefulWidget {
+  const _HeroShimmer();
+
+  @override
+  State<_HeroShimmer> createState() => _HeroShimmerState();
+}
+
+class _HeroShimmerState extends State<_HeroShimmer>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  late Animation<double> _anim;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1400),
+    )..repeat();
+    _anim = Tween<double>(begin: -2, end: 2).animate(
+      CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _anim,
+      builder: (_, __) {
+        return DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment(_anim.value - 1, 0),
+              end: Alignment(_anim.value + 1, 0),
+              colors: const [
+                Color(0xFF1A1D24),
+                Color(0xFF262A35),
+                Color(0xFF1A1D24),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }
