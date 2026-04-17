@@ -1315,6 +1315,20 @@ class AppDatabase extends _$AppDatabase {
         : null;
   }
 
+  Future<SeriesStream?> findSeriesById(
+    String seriesId,
+    String playlistId,
+  ) async {
+    final seriesData = await (select(seriesStreams)
+          ..where(
+            (tbl) =>
+                tbl.seriesId.equals(seriesId) & tbl.playlistId.equals(playlistId),
+          ))
+        .getSingleOrNull();
+
+    return seriesData != null ? SeriesStream.fromDriftSeriesStream(seriesData) : null;
+  }
+
   Future<int> clearSeriesData(String seriesId, String playlistId) async {
     await (delete(episodes)..where(
           (tbl) =>

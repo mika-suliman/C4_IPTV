@@ -29,15 +29,15 @@ class _WatchLaterScreenState extends State<WatchLaterScreen> {
 
     final liveItems = items
         .where((i) => i.contentType == ContentType.liveStream)
-        .map(_mapToContentItem)
+        .map((i) => ContentItem(i.streamId, i.title, i.imagePath ?? '', i.contentType))
         .toList();
     final movieItems = items
         .where((i) => i.contentType == ContentType.vod)
-        .map(_mapToContentItem)
+        .map((i) => ContentItem(i.streamId, i.title, i.imagePath ?? '', i.contentType))
         .toList();
     final seriesItems = items
         .where((i) => i.contentType == ContentType.series)
-        .map(_mapToContentItem)
+        .map((i) => ContentItem(i.streamId, i.title, i.imagePath ?? '', i.contentType))
         .toList();
 
     return Scaffold(
@@ -72,15 +72,6 @@ class _WatchLaterScreenState extends State<WatchLaterScreen> {
                       ),
                   ],
                 ),
-    );
-  }
-
-  ContentItem _mapToContentItem(dynamic h) {
-    return ContentItem(
-      h.streamId,
-      h.title,
-      h.imagePath ?? '',
-      h.contentType,
     );
   }
 
