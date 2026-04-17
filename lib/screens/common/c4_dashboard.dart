@@ -1,7 +1,13 @@
-import '../../utils/navigate_by_content_type.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../controllers/xtream_code_home_controller.dart';
+import '../../controllers/watch_history_controller.dart';
+import '../../controllers/favorites_controller.dart';
+import '../../controllers/watch_later_controller.dart';
+import '../../l10n/localization_extension.dart';
+import '../../models/content_type.dart';
 import '../../models/playlist_content_model.dart';
 import '../../services/tmdb_service.dart';
-import '../../controllers/watch_later_controller.dart';
 import '../../widgets/common/c4_dashboard_hero.dart';
 import '../../widgets/common/c4_content_rail.dart';
 
@@ -55,7 +61,7 @@ class _C4DashboardState extends State<C4Dashboard> {
       final favoritesController = context.read<FavoritesController>();
       final watchLaterController = context.read<WatchLaterController>();
 
-      await Future.wait([
+      await Future.wait<void>([
         historyController.loadWatchHistory(),
         favoritesController.loadFavorites(),
         watchLaterController.loadWatchLaterItems(),
