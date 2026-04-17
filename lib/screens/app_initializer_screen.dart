@@ -1,4 +1,6 @@
 import 'package:another_iptv_player/models/playlist_model.dart';
+import 'package:another_iptv_player/models/api_configuration_model.dart';
+import 'package:another_iptv_player/repositories/iptv_repository.dart';
 import 'package:another_iptv_player/screens/m3u/m3u_home_screen.dart';
 import 'package:another_iptv_player/screens/playlist_screen.dart';
 import 'package:flutter/material.dart';
@@ -33,6 +35,17 @@ class _AppInitializerScreenState extends State<AppInitializerScreen> {
       if (playlist != null) {
         AppState.currentPlaylist = playlist;
         _lastPlaylist = playlist;
+
+        if (playlist.type == PlaylistType.xtream) {
+          AppState.xtreamCodeRepository = IptvRepository(
+            ApiConfig(
+              baseUrl: playlist.url!,
+              username: playlist.username!,
+              password: playlist.password!,
+            ),
+            playlist.id,
+          );
+        }
       }
     }
 

@@ -101,7 +101,15 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         setState(() => _selectedIndex = index);
       },
       onSearchTap: () => C4SearchModal.show(context),
-      child: _buildContent(),
+      child: widget.playlist.type == PlaylistType.xtream
+          ? ChangeNotifierProvider<XtreamCodeHomeController>.value(
+              value: _controller as XtreamCodeHomeController,
+              child: _buildContent(),
+            )
+          : ChangeNotifierProvider<M3UHomeController>.value(
+              value: _controller as M3UHomeController,
+              child: _buildContent(),
+            ),
     );
   }
 }

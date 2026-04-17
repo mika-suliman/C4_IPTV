@@ -95,6 +95,7 @@ class XtreamCodeDataLoaderScreenState extends State<XtreamCodeDataLoaderScreen>
       ),
       widget.playlist.id,
     );
+    AppState.xtreamCodeRepository = repository;
     _controller = IptvController(repository, widget.refreshAll);
 
     _startLoading();
