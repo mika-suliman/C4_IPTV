@@ -1,3 +1,4 @@
+import 'package:another_iptv_player/models/content_type.dart';
 import 'package:another_iptv_player/models/favorite.dart';
 import 'package:another_iptv_player/models/playlist_content_model.dart';
 import 'package:another_iptv_player/repositories/favorites_repository.dart';
@@ -182,13 +183,15 @@ class FavoritesController extends ChangeNotifier {
       _setError(null);
       final contentItem = await _repository.getContentItemFromFavorite(favorite);
 
+      if (contentItem == null) {
+        _setError('Favori içeriği bulunamadı');
+        return;
+      }
+
       if (isXtreamCode) {
         if (favorite.contentType == ContentType.series &&
             favorite.episodeId != null) {
           // If it's a specific episode, try to navigate to EpisodeScreen
-          // This requires fetching series info, similar to WatchHistoryController
-          // For now, if we can't easily fetch full series info here, 
-          // we fallback to standard navigation which might open SeriesDetail.
           navigateByContentType(context, contentItem);
         } else {
           navigateByContentType(context, contentItem);

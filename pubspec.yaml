@@ -14,21 +14,10 @@ dependencies:
     sdk: flutter
   intl: ^0.20.2
   get_it: ^7.2.0
-  media_kit:
-    git:
-      url: https://github.com/media-kit/media-kit.git
-      path: media_kit
-      ref: main
-  media_kit_video:
-    git:
-      url: https://github.com/media-kit/media-kit.git
-      path: media_kit_video
-      ref: main
-  media_kit_libs_video:
-    git:
-      url: https://github.com/media-kit/media-kit.git
-      path: libs/universal/media_kit_libs_video
-      ref: main
+  media_kit: ^1.2.6
+  media_kit_video: ^2.0.1
+  media_kit_libs_video: ^1.0.7
+
   provider: ^6.1.1
   drift: ^2.26.1
   sqlite3_flutter_libs: ^0.5.34
@@ -57,31 +46,6 @@ dependencies:
   wakelock_plus: ^1.2.5
   crypto: ^3.0.6
   window_manager: ^0.4.3
-
-dependency_overrides:
-  media_kit:
-    git:
-      url: https://github.com/media-kit/media-kit.git
-      path: media_kit
-      ref: main
-
-  media_kit_video:
-    git:
-      url: https://github.com/media-kit/media-kit.git
-      path: media_kit_video
-      ref: main
-
-  media_kit_libs_video:
-    git:
-      url: https://github.com/media-kit/media-kit.git
-      path: libs/universal/media_kit_libs_video
-      ref: main
-
-  media_kit_libs_windows_video:
-    git:
-      url: https://github.com/media-kit/media-kit.git
-      path: libs/windows/media_kit_libs_windows_video
-      ref: main
 
 dev_dependencies:
   flutter_test:
