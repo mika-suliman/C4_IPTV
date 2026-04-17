@@ -89,7 +89,7 @@ class _C4ContentGridScreenState extends State<C4ContentGridScreen> {
                 Expanded(
                   child: GridView.builder(
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: widget.contentType == ContentType.vod ? 5 : 5,
+                      crossAxisCount: _getCrossAxisCount(context),
                       childAspectRatio: 2 / 3, // Poster aspect ratio
                       crossAxisSpacing: 16,
                       mainAxisSpacing: 16,
@@ -192,6 +192,19 @@ class _C4ContentGridScreenState extends State<C4ContentGridScreen> {
     } else {
       return _focusedItem!.seriesStream?.plot ?? 'Series Plot not available.';
     }
+  }
+
+  int _getCrossAxisCount(BuildContext context) {
+    double width = MediaQuery.of(context).size.width;
+    // Sidebar(200) + InfoPanel(320 if active) + Padding(48)
+    double infoPanelWidth = _focusedItem != null ? 320 : 0;
+    double availableWidth = width - 200 - infoPanelWidth - 48;
+
+    if (availableWidth > 1400) return 6;
+    if (availableWidth > 1100) return 5;
+    if (availableWidth > 800) return 4;
+    if (availableWidth > 500) return 3;
+    return 2;
   }
 }
 

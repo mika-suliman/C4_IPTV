@@ -21,6 +21,9 @@ class XtreamCodeHomeController extends ChangeNotifier {
   final List<CategoryViewModel> _liveCategories = [];
   final List<CategoryViewModel> _movieCategories = [];
   final List<CategoryViewModel> _seriesCategories = [];
+  
+  ContentItem? _heroItem;
+  List<ContentItem> _recommendations = [];
 
   // --- Categoriy hidden ---
   final Set<String> _hiddenMovieCategoryIds = {};
@@ -70,6 +73,9 @@ class XtreamCodeHomeController extends ChangeNotifier {
   List<CategoryViewModel> get movieCategories => _movieCategories;
 
   List<CategoryViewModel> get seriesCategories => _seriesCategories;
+
+  ContentItem? get heroItem => _heroItem;
+  List<ContentItem> get recommendations => _recommendations;
 
   XtreamCodeHomeController(bool all) {
     _pageController = PageController();
@@ -237,6 +243,7 @@ class XtreamCodeHomeController extends ChangeNotifier {
         }
       }
 
+      _generateDashboardContent();
       notifyListeners();
     } catch (e, st) {
       debugPrint(st.toString());
@@ -255,5 +262,20 @@ class XtreamCodeHomeController extends ChangeNotifier {
         ),
       ),
     );
+  }
+
+  void _generateDashboardContent() {
+    final allVodsAndSeries = [
+      ..._movieCategories.expand((c) => c.contentItems),
+      ..._seriesCategories.expand((c) => c.contentItems),
+    ];
+
+    if (allVodsAndSeries.isNotEmpty) {
+      final list = List<ContentItem>.from(allVodsAndSeries)..shuffle();
+      _heroItem = list.first;
+      
+      // Get up to 15 unique recommendations
+      _recommendations = list.take(15).toList();
+    }
   }
 }

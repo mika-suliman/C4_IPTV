@@ -10275,6 +10275,476 @@ class FavoritesCompanion extends UpdateCompanion<FavoritesData> {
   }
 }
 
+class $WatchLatersTable extends WatchLaters
+    with TableInfo<$WatchLatersTable, WatchLaterData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $WatchLatersTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _playlistIdMeta = const VerificationMeta(
+    'playlistId',
+  );
+  @override
+  late final GeneratedColumn<String> playlistId = GeneratedColumn<String>(
+    'playlist_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<ContentType, int> contentType =
+      GeneratedColumn<int>(
+        'content_type',
+        aliasedName,
+        false,
+        type: DriftSqlType.int,
+        requiredDuringInsert: true,
+      ).withConverter<ContentType>($WatchLatersTable.$convertercontentType);
+  static const VerificationMeta _streamIdMeta = const VerificationMeta(
+    'streamId',
+  );
+  @override
+  late final GeneratedColumn<String> streamId = GeneratedColumn<String>(
+    'stream_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _titleMeta = const VerificationMeta('title');
+  @override
+  late final GeneratedColumn<String> title = GeneratedColumn<String>(
+    'title',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _imagePathMeta = const VerificationMeta(
+    'imagePath',
+  );
+  @override
+  late final GeneratedColumn<String> imagePath = GeneratedColumn<String>(
+    'image_path',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _addedAtMeta = const VerificationMeta(
+    'addedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> addedAt = GeneratedColumn<DateTime>(
+    'added_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    playlistId,
+    contentType,
+    streamId,
+    title,
+    imagePath,
+    addedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'watch_laters';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<WatchLaterData> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('playlist_id')) {
+      context.handle(
+        _playlistIdMeta,
+        playlistId.isAcceptableOrUnknown(data['playlist_id']!, _playlistIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_playlistIdMeta);
+    }
+    if (data.containsKey('stream_id')) {
+      context.handle(
+        _streamIdMeta,
+        streamId.isAcceptableOrUnknown(data['stream_id']!, _streamIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_streamIdMeta);
+    }
+    if (data.containsKey('title')) {
+      context.handle(
+        _titleMeta,
+        title.isAcceptableOrUnknown(data['title']!, _titleMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_titleMeta);
+    }
+    if (data.containsKey('image_path')) {
+      context.handle(
+        _imagePathMeta,
+        imagePath.isAcceptableOrUnknown(data['image_path']!, _imagePathMeta),
+      );
+    }
+    if (data.containsKey('added_at')) {
+      context.handle(
+        _addedAtMeta,
+        addedAt.isAcceptableOrUnknown(data['added_at']!, _addedAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  WatchLaterData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return WatchLaterData(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      playlistId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}playlist_id'],
+      )!,
+      contentType: $WatchLatersTable.$convertercontentType.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.int,
+          data['${effectivePrefix}content_type'],
+        )!,
+      ),
+      streamId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}stream_id'],
+      )!,
+      title: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}title'],
+      )!,
+      imagePath: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}image_path'],
+      ),
+      addedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}added_at'],
+      )!,
+    );
+  }
+
+  @override
+  $WatchLatersTable createAlias(String alias) {
+    return $WatchLatersTable(attachedDatabase, alias);
+  }
+
+  static JsonTypeConverter2<ContentType, int, int> $convertercontentType =
+      const EnumIndexConverter<ContentType>(ContentType.values);
+}
+
+class WatchLaterData extends DataClass implements Insertable<WatchLaterData> {
+  final String id;
+  final String playlistId;
+  final ContentType contentType;
+  final String streamId;
+  final String title;
+  final String? imagePath;
+  final DateTime addedAt;
+  const WatchLaterData({
+    required this.id,
+    required this.playlistId,
+    required this.contentType,
+    required this.streamId,
+    required this.title,
+    this.imagePath,
+    required this.addedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['playlist_id'] = Variable<String>(playlistId);
+    {
+      map['content_type'] = Variable<int>(
+        $WatchLatersTable.$convertercontentType.toSql(contentType),
+      );
+    }
+    map['stream_id'] = Variable<String>(streamId);
+    map['title'] = Variable<String>(title);
+    if (!nullToAbsent || imagePath != null) {
+      map['image_path'] = Variable<String>(imagePath);
+    }
+    map['added_at'] = Variable<DateTime>(addedAt);
+    return map;
+  }
+
+  WatchLatersCompanion toCompanion(bool nullToAbsent) {
+    return WatchLatersCompanion(
+      id: Value(id),
+      playlistId: Value(playlistId),
+      contentType: Value(contentType),
+      streamId: Value(streamId),
+      title: Value(title),
+      imagePath: imagePath == null && nullToAbsent
+          ? const Value.absent()
+          : Value(imagePath),
+      addedAt: Value(addedAt),
+    );
+  }
+
+  factory WatchLaterData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return WatchLaterData(
+      id: serializer.fromJson<String>(json['id']),
+      playlistId: serializer.fromJson<String>(json['playlistId']),
+      contentType: $WatchLatersTable.$convertercontentType.fromJson(
+        serializer.fromJson<int>(json['contentType']),
+      ),
+      streamId: serializer.fromJson<String>(json['streamId']),
+      title: serializer.fromJson<String>(json['title']),
+      imagePath: serializer.fromJson<String?>(json['imagePath']),
+      addedAt: serializer.fromJson<DateTime>(json['addedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'playlistId': serializer.toJson<String>(playlistId),
+      'contentType': serializer.toJson<int>(
+        $WatchLatersTable.$convertercontentType.toJson(contentType),
+      ),
+      'streamId': serializer.toJson<String>(streamId),
+      'title': serializer.toJson<String>(title),
+      'imagePath': serializer.toJson<String?>(imagePath),
+      'addedAt': serializer.toJson<DateTime>(addedAt),
+    };
+  }
+
+  WatchLaterData copyWith({
+    String? id,
+    String? playlistId,
+    ContentType? contentType,
+    String? streamId,
+    String? title,
+    Value<String?> imagePath = const Value.absent(),
+    DateTime? addedAt,
+  }) => WatchLaterData(
+    id: id ?? this.id,
+    playlistId: playlistId ?? this.playlistId,
+    contentType: contentType ?? this.contentType,
+    streamId: streamId ?? this.streamId,
+    title: title ?? this.title,
+    imagePath: imagePath.present ? imagePath.value : this.imagePath,
+    addedAt: addedAt ?? this.addedAt,
+  );
+  WatchLaterData copyWithCompanion(WatchLatersCompanion data) {
+    return WatchLaterData(
+      id: data.id.present ? data.id.value : this.id,
+      playlistId: data.playlistId.present
+          ? data.playlistId.value
+          : this.playlistId,
+      contentType: data.contentType.present
+          ? data.contentType.value
+          : this.contentType,
+      streamId: data.streamId.present ? data.streamId.value : this.streamId,
+      title: data.title.present ? data.title.value : this.title,
+      imagePath: data.imagePath.present ? data.imagePath.value : this.imagePath,
+      addedAt: data.addedAt.present ? data.addedAt.value : this.addedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('WatchLaterData(')
+          ..write('id: $id, ')
+          ..write('playlistId: $playlistId, ')
+          ..write('contentType: $contentType, ')
+          ..write('streamId: $streamId, ')
+          ..write('title: $title, ')
+          ..write('imagePath: $imagePath, ')
+          ..write('addedAt: $addedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    playlistId,
+    contentType,
+    streamId,
+    title,
+    imagePath,
+    addedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is WatchLaterData &&
+          other.id == this.id &&
+          other.playlistId == this.playlistId &&
+          other.contentType == this.contentType &&
+          other.streamId == this.streamId &&
+          other.title == this.title &&
+          other.imagePath == this.imagePath &&
+          other.addedAt == this.addedAt);
+}
+
+class WatchLatersCompanion extends UpdateCompanion<WatchLaterData> {
+  final Value<String> id;
+  final Value<String> playlistId;
+  final Value<ContentType> contentType;
+  final Value<String> streamId;
+  final Value<String> title;
+  final Value<String?> imagePath;
+  final Value<DateTime> addedAt;
+  final Value<int> rowid;
+  const WatchLatersCompanion({
+    this.id = const Value.absent(),
+    this.playlistId = const Value.absent(),
+    this.contentType = const Value.absent(),
+    this.streamId = const Value.absent(),
+    this.title = const Value.absent(),
+    this.imagePath = const Value.absent(),
+    this.addedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  WatchLatersCompanion.insert({
+    required String id,
+    required String playlistId,
+    required ContentType contentType,
+    required String streamId,
+    required String title,
+    this.imagePath = const Value.absent(),
+    this.addedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       playlistId = Value(playlistId),
+       contentType = Value(contentType),
+       streamId = Value(streamId),
+       title = Value(title);
+  static Insertable<WatchLaterData> custom({
+    Expression<String>? id,
+    Expression<String>? playlistId,
+    Expression<int>? contentType,
+    Expression<String>? streamId,
+    Expression<String>? title,
+    Expression<String>? imagePath,
+    Expression<DateTime>? addedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (playlistId != null) 'playlist_id': playlistId,
+      if (contentType != null) 'content_type': contentType,
+      if (streamId != null) 'stream_id': streamId,
+      if (title != null) 'title': title,
+      if (imagePath != null) 'image_path': imagePath,
+      if (addedAt != null) 'added_at': addedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  WatchLatersCompanion copyWith({
+    Value<String>? id,
+    Value<String>? playlistId,
+    Value<ContentType>? contentType,
+    Value<String>? streamId,
+    Value<String>? title,
+    Value<String?>? imagePath,
+    Value<DateTime>? addedAt,
+    Value<int>? rowid,
+  }) {
+    return WatchLatersCompanion(
+      id: id ?? this.id,
+      playlistId: playlistId ?? this.playlistId,
+      contentType: contentType ?? this.contentType,
+      streamId: streamId ?? this.streamId,
+      title: title ?? this.title,
+      imagePath: imagePath ?? this.imagePath,
+      addedAt: addedAt ?? this.addedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (playlistId.present) {
+      map['playlist_id'] = Variable<String>(playlistId.value);
+    }
+    if (contentType.present) {
+      map['content_type'] = Variable<int>(
+        $WatchLatersTable.$convertercontentType.toSql(contentType.value),
+      );
+    }
+    if (streamId.present) {
+      map['stream_id'] = Variable<String>(streamId.value);
+    }
+    if (title.present) {
+      map['title'] = Variable<String>(title.value);
+    }
+    if (imagePath.present) {
+      map['image_path'] = Variable<String>(imagePath.value);
+    }
+    if (addedAt.present) {
+      map['added_at'] = Variable<DateTime>(addedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('WatchLatersCompanion(')
+          ..write('id: $id, ')
+          ..write('playlistId: $playlistId, ')
+          ..write('contentType: $contentType, ')
+          ..write('streamId: $streamId, ')
+          ..write('title: $title, ')
+          ..write('imagePath: $imagePath, ')
+          ..write('addedAt: $addedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -10293,6 +10763,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $M3uSeriesTable m3uSeries = $M3uSeriesTable(this);
   late final $M3uEpisodesTable m3uEpisodes = $M3uEpisodesTable(this);
   late final $FavoritesTable favorites = $FavoritesTable(this);
+  late final $WatchLatersTable watchLaters = $WatchLatersTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -10313,6 +10784,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     m3uSeries,
     m3uEpisodes,
     favorites,
+    watchLaters,
   ];
 }
 
@@ -15225,6 +15697,250 @@ typedef $$FavoritesTableProcessedTableManager =
       FavoritesData,
       PrefetchHooks Function()
     >;
+typedef $$WatchLatersTableCreateCompanionBuilder =
+    WatchLatersCompanion Function({
+      required String id,
+      required String playlistId,
+      required ContentType contentType,
+      required String streamId,
+      required String title,
+      Value<String?> imagePath,
+      Value<DateTime> addedAt,
+      Value<int> rowid,
+    });
+typedef $$WatchLatersTableUpdateCompanionBuilder =
+    WatchLatersCompanion Function({
+      Value<String> id,
+      Value<String> playlistId,
+      Value<ContentType> contentType,
+      Value<String> streamId,
+      Value<String> title,
+      Value<String?> imagePath,
+      Value<DateTime> addedAt,
+      Value<int> rowid,
+    });
+
+class $$WatchLatersTableFilterComposer
+    extends Composer<_$AppDatabase, $WatchLatersTable> {
+  $$WatchLatersTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get playlistId => $composableBuilder(
+    column: $table.playlistId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<ContentType, ContentType, int>
+  get contentType => $composableBuilder(
+    column: $table.contentType,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnFilters<String> get streamId => $composableBuilder(
+    column: $table.streamId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get imagePath => $composableBuilder(
+    column: $table.imagePath,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get addedAt => $composableBuilder(
+    column: $table.addedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$WatchLatersTableOrderingComposer
+    extends Composer<_$AppDatabase, $WatchLatersTable> {
+  $$WatchLatersTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get playlistId => $composableBuilder(
+    column: $table.playlistId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get contentType => $composableBuilder(
+    column: $table.contentType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get streamId => $composableBuilder(
+    column: $table.streamId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get imagePath => $composableBuilder(
+    column: $table.imagePath,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get addedAt => $composableBuilder(
+    column: $table.addedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$WatchLatersTableAnnotationComposer
+    extends Composer<_$AppDatabase, $WatchLatersTable> {
+  $$WatchLatersTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get playlistId => $composableBuilder(
+    column: $table.playlistId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumnWithTypeConverter<ContentType, int> get contentType =>
+      $composableBuilder(
+        column: $table.contentType,
+        builder: (column) => column,
+      );
+
+  GeneratedColumn<String> get streamId =>
+      $composableBuilder(column: $table.streamId, builder: (column) => column);
+
+  GeneratedColumn<String> get title =>
+      $composableBuilder(column: $table.title, builder: (column) => column);
+
+  GeneratedColumn<String> get imagePath =>
+      $composableBuilder(column: $table.imagePath, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get addedAt =>
+      $composableBuilder(column: $table.addedAt, builder: (column) => column);
+}
+
+class $$WatchLatersTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $WatchLatersTable,
+          WatchLaterData,
+          $$WatchLatersTableFilterComposer,
+          $$WatchLatersTableOrderingComposer,
+          $$WatchLatersTableAnnotationComposer,
+          $$WatchLatersTableCreateCompanionBuilder,
+          $$WatchLatersTableUpdateCompanionBuilder,
+          (
+            WatchLaterData,
+            BaseReferences<_$AppDatabase, $WatchLatersTable, WatchLaterData>,
+          ),
+          WatchLaterData,
+          PrefetchHooks Function()
+        > {
+  $$WatchLatersTableTableManager(_$AppDatabase db, $WatchLatersTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$WatchLatersTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$WatchLatersTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$WatchLatersTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> playlistId = const Value.absent(),
+                Value<ContentType> contentType = const Value.absent(),
+                Value<String> streamId = const Value.absent(),
+                Value<String> title = const Value.absent(),
+                Value<String?> imagePath = const Value.absent(),
+                Value<DateTime> addedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => WatchLatersCompanion(
+                id: id,
+                playlistId: playlistId,
+                contentType: contentType,
+                streamId: streamId,
+                title: title,
+                imagePath: imagePath,
+                addedAt: addedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String playlistId,
+                required ContentType contentType,
+                required String streamId,
+                required String title,
+                Value<String?> imagePath = const Value.absent(),
+                Value<DateTime> addedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => WatchLatersCompanion.insert(
+                id: id,
+                playlistId: playlistId,
+                contentType: contentType,
+                streamId: streamId,
+                title: title,
+                imagePath: imagePath,
+                addedAt: addedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$WatchLatersTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $WatchLatersTable,
+      WatchLaterData,
+      $$WatchLatersTableFilterComposer,
+      $$WatchLatersTableOrderingComposer,
+      $$WatchLatersTableAnnotationComposer,
+      $$WatchLatersTableCreateCompanionBuilder,
+      $$WatchLatersTableUpdateCompanionBuilder,
+      (
+        WatchLaterData,
+        BaseReferences<_$AppDatabase, $WatchLatersTable, WatchLaterData>,
+      ),
+      WatchLaterData,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -15259,4 +15975,6 @@ class $AppDatabaseManager {
       $$M3uEpisodesTableTableManager(_db, _db.m3uEpisodes);
   $$FavoritesTableTableManager get favorites =>
       $$FavoritesTableTableManager(_db, _db.favorites);
+  $$WatchLatersTableTableManager get watchLaters =>
+      $$WatchLatersTableTableManager(_db, _db.watchLaters);
 }

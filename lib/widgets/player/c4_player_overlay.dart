@@ -1,8 +1,12 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import '../../services/player_state.dart' as app_player_state;
+import '../../models/playlist_content_model.dart';
+import '../../utils/navigate_by_content_type.dart';
+import '../../utils/get_playlist_type.dart';
 
 class C4PlayerOverlay extends StatefulWidget {
   final Player player;
@@ -20,18 +24,28 @@ class C4PlayerOverlay extends StatefulWidget {
 
 class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
   bool _isVisible = true;
+  bool _showSidePanel = false;
+  bool _showInfoPanel = false;
   Timer? _hideTimer;
   Duration _position = Duration.zero;
   Duration _duration = Duration.zero;
+  double _volume = 1.0;
+  bool _isMuted = false;
   late List<StreamSubscription> _subscriptions;
 
   @override
   void initState() {
     super.initState();
+    _volume = widget.player.state.volume / 100.0;
+    _isMuted = widget.player.state.volume == 0;
     _startHideTimer();
     _subscriptions = [
       widget.player.stream.position.listen((p) => setState(() => _position = p)),
       widget.player.stream.duration.listen((d) => setState(() => _duration = d)),
+      widget.player.stream.volume.listen((v) => setState(() {
+        _volume = v / 100.0;
+        _isMuted = v == 0;
+      })),
     ];
   }
 
@@ -46,6 +60,7 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
 
   void _startHideTimer() {
     _hideTimer?.cancel();
+    if (_showSidePanel || _showInfoPanel) return;
     _hideTimer = Timer(const Duration(seconds: 5), () {
       if (mounted) setState(() => _isVisible = false);
     });
@@ -58,6 +73,13 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
     });
   }
 
+  void _showOverlay() {
+    setState(() {
+      _isVisible = true;
+      _startHideTimer();
+    });
+  }
+
   String _formatDuration(Duration d) {
     if (d.inHours > 0) {
       return "${d.inHours}:${d.inMinutes.remainder(60).toString().padLeft(2, '0')}:${d.inSeconds.remainder(60).toString().padLeft(2, '0')}";
@@ -65,141 +87,405 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
     return "${d.inMinutes}:${d.inSeconds.remainder(60).toString().padLeft(2, '0')}";
   }
 
+  void _onKey(KeyEvent event) {
+    if (event is! KeyDownEvent) return;
+
+    // First press simply reveals overlay
+    if (!_isVisible) {
+      _showOverlay();
+      return;
+    }
+
+    _startHideTimer();
+
+    final key = event.logicalKey;
+    if (key == LogicalKeyboardKey.arrowUp || key == LogicalKeyboardKey.pageUp) {
+      _adjustVolume(0.05);
+    } else if (key == LogicalKeyboardKey.arrowDown || key == LogicalKeyboardKey.pageDown) {
+      _adjustVolume(-0.05);
+    } else if (key == LogicalKeyboardKey.escape || key == LogicalKeyboardKey.backspace) {
+      if (_showSidePanel) {
+        setState(() => _showSidePanel = false);
+      } else if (_showInfoPanel) {
+        setState(() => _showInfoPanel = false);
+      } else {
+        Navigator.pop(context);
+      }
+    }
+  }
+
+  void _adjustVolume(double delta) {
+    double newVol = (_volume + delta).clamp(0.0, 1.0);
+    widget.player.setVolume(newVol * 100);
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isLive = _duration.inSeconds == 0; // Simplified check for live
+    final isLive = _duration.inSeconds == 0;
+    final videoTrack = widget.player.state.track.video;
 
-    return GestureDetector(
-      onTap: _toggleVisibility,
-      behavior: HitTestBehavior.translucent,
-      child: Focus(
-        autofocus: true,
-        onKeyEvent: (node, event) {
-          if (!_isVisible) {
-            setState(() {
-              _isVisible = true;
-              _startHideTimer();
-            });
-            return KeyEventResult.handled;
-          }
-           _startHideTimer();
-           return KeyEventResult.ignored;
-        },
-        child: AnimatedOpacity(
-          opacity: _isVisible ? 1.0 : 0.0,
-          duration: const Duration(milliseconds: 300),
-          child: Stack(
-            children: [
-              // Bottom Gradient
-              Positioned(
-                bottom: 0,
-                left: 0,
-                right: 0,
-                height: 300,
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.bottomCenter,
-                      end: Alignment.topCenter,
-                      colors: [
-                        Colors.black.withOpacity(0.9),
-                        Colors.black.withOpacity(0.5),
-                        Colors.transparent,
-                      ],
+    return KeyboardListener(
+      focusNode: FocusNode()..requestFocus(),
+      onKeyEvent: _onKey,
+      child: GestureDetector(
+        onTap: _toggleVisibility,
+        behavior: HitTestBehavior.translucent,
+        child: Stack(
+          children: [
+            // Overlay Content
+            AnimatedOpacity(
+              opacity: _isVisible ? 1.0 : 0.0,
+              duration: const Duration(milliseconds: 300),
+              child: IgnorePointer(
+                ignoring: !_isVisible,
+                child: Stack(
+                  children: [
+                    // Top Bar
+                    _buildTopBar(theme),
+
+                    // Bottom Bar
+                    _buildBottomBar(theme, isLive),
+
+                    // Info Panel (Metadata overlay)
+                    if (_showInfoPanel) _buildInfoPanel(theme, videoTrack),
+                  ],
+                ),
+              ),
+            ),
+
+            // Side Panel (Always accessible if visible, or can trigger visibility)
+            if (_showSidePanel) _buildSidePanel(theme),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTopBar(ThemeData theme) {
+    return Positioned(
+      top: 0,
+      left: 0,
+      right: 0,
+      child: Container(
+        height: 120,
+        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 40),
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Colors.black87, Colors.transparent],
+          ),
+        ),
+        child: Row(
+          children: [
+            IconButton(
+              icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+              onPressed: () => Navigator.pop(context),
+            ),
+            const SizedBox(width: 20),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    app_player_state.PlayerState.title,
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (isXtreamCode)
+                    Text(
+                      'Live TV Stream',
+                      style: theme.textTheme.bodySmall?.copyWith(color: Colors.white70),
+                    ),
+                ],
+              ),
+            ),
+            IconButton(
+              icon: Icon(
+                _showInfoPanel ? Icons.info_rounded : Icons.info_outline_rounded,
+                color: _showInfoPanel ? theme.colorScheme.primary : Colors.white,
+              ),
+              onPressed: () => setState(() {
+                _showInfoPanel = !_showInfoPanel;
+                _showSidePanel = false;
+                _startHideTimer();
+              }),
+            ),
+            const SizedBox(width: 16),
+            IconButton(
+              icon: Icon(
+                _showSidePanel ? Icons.menu_open_rounded : Icons.menu_rounded,
+                color: _showSidePanel ? theme.colorScheme.primary : Colors.white,
+              ),
+              onPressed: () => setState(() {
+                _showSidePanel = !_showSidePanel;
+                _showInfoPanel = false;
+                _startHideTimer();
+              }),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBottomBar(ThemeData theme, bool isLive) {
+    return Positioned(
+      bottom: 0,
+      left: 0,
+      right: 0,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(60, 40, 60, 60),
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.bottomCenter,
+            end: Alignment.topCenter,
+            colors: [Colors.black87, Colors.transparent],
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Progress Slider
+            if (!isLive) ...[
+              SliderTheme(
+                data: SliderTheme.of(context).copyWith(
+                  activeTrackColor: theme.colorScheme.primary,
+                  inactiveTrackColor: Colors.white24,
+                  thumbColor: theme.colorScheme.primary,
+                  overlayColor: theme.colorScheme.primary.withOpacity(0.2),
+                  trackHeight: 4,
+                ),
+                child: Slider(
+                  value: _position.inSeconds.toDouble(),
+                  max: _duration.inSeconds.toDouble() > 0 ? _duration.inSeconds.toDouble() : 1.0,
+                  onChanged: (val) => widget.player.seek(Duration(seconds: val.toInt())),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(_formatDuration(_position), style: const TextStyle(color: Colors.white70)),
+                  Text(_formatDuration(_duration), style: const TextStyle(color: Colors.white70)),
+                ],
+              ),
+            ] else 
+              const Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Icon(Icons.circle, color: Colors.red, size: 10),
+                  SizedBox(width: 8),
+                  Text('LIVE', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+                ],
+              ),
+            
+            const SizedBox(height: 24),
+            
+            // Bottom Controls Row
+            Row(
+              children: [
+                _PlayerControlBtn(
+                  icon: widget.player.state.playing ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                  isLarge: true,
+                  onPressed: () => widget.player.playOrPause(),
+                ),
+                const SizedBox(width: 32),
+                
+                // Volume Controls
+                Icon(
+                  _isMuted || _volume == 0 ? Icons.volume_off_rounded : 
+                  _volume < 0.5 ? Icons.volume_down_rounded : Icons.volume_up_rounded,
+                  color: Colors.white70,
+                  size: 24,
+                ),
+                SizedBox(
+                  width: 150,
+                  child: SliderTheme(
+                    data: SliderTheme.of(context).copyWith(
+                      activeTrackColor: Colors.white,
+                      inactiveTrackColor: Colors.white12,
+                      thumbColor: Colors.white,
+                      trackHeight: 2,
+                      thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+                    ),
+                    child: Slider(
+                      value: _volume,
+                      onChanged: (val) => widget.player.setVolume(val * 100),
                     ),
                   ),
                 ),
-              ),
-
-              // Metadata (Top Left)
-              Positioned(
-                top: 40,
-                left: 40,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      app_player_state.PlayerState.title ?? 'Unknown Content',
-                      style: theme.textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // Center Controls
-              Center(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _PlayerControlBtn(
-                      icon: Icons.replay_10_rounded,
-                      onPressed: () => widget.player.seek(_position - const Duration(seconds: 10)),
-                    ),
-                    const SizedBox(width: 40),
-                    _PlayerControlBtn(
-                      icon: widget.player.state.playing ? Icons.pause_rounded : Icons.play_arrow_rounded,
-                      isLarge: true,
-                      onPressed: () => widget.player.playOrPause(),
-                    ),
-                    const SizedBox(width: 40),
-                    _PlayerControlBtn(
-                      icon: Icons.forward_10_rounded,
-                      onPressed: () => widget.player.seek(_position + const Duration(seconds: 10)),
-                    ),
-                  ],
-                ),
-              ),
-
-              // Bottom Progress Bar
-              Positioned(
-                bottom: 60,
-                left: 60,
-                right: 60,
-                child: Column(
-                  children: [
-                    if (!isLive) ...[
-                      SliderTheme(
-                        data: SliderTheme.of(context).copyWith(
-                          activeTrackColor: theme.colorScheme.primary,
-                          inactiveTrackColor: Colors.white24,
-                          thumbColor: theme.colorScheme.primary,
-                          overlayColor: theme.colorScheme.primary.withOpacity(0.2),
-                          trackHeight: 4,
-                        ),
-                        child: Slider(
-                          value: _position.inSeconds.toDouble(),
-                          max: _duration.inSeconds.toDouble() > 0 ? _duration.inSeconds.toDouble() : 1.0,
-                          onChanged: (val) => widget.player.seek(Duration(seconds: val.toInt())),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(_formatDuration(_position), style: const TextStyle(color: Colors.white70)),
-                          Text(_formatDuration(_duration), style: const TextStyle(color: Colors.white70)),
-                        ],
-                      ),
-                    ] else ...[
-                       const Row(
-                         mainAxisAlignment: MainAxisAlignment.end,
-                         children: [
-                           Icon(Icons.circle, color: Colors.red, size: 12),
-                           SizedBox(width: 8),
-                           Text('LIVE', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, letterSpacing: 1)),
-                         ],
-                       ),
-                    ],
-                  ],
-                ),
-              ),
-            ],
-          ),
+                const Spacer(),
+                
+                if (!isLive) ...[
+                   _PlayerControlBtn(
+                    icon: Icons.replay_10_rounded,
+                    onPressed: () => widget.player.seek(_position - const Duration(seconds: 10)),
+                  ),
+                  const SizedBox(width: 16),
+                  _PlayerControlBtn(
+                    icon: Icons.forward_10_rounded,
+                    onPressed: () => widget.player.seek(_position + const Duration(seconds: 10)),
+                  ),
+                ],
+              ],
+            ),
+          ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildInfoPanel(ThemeData theme, VideoTrack track) {
+    return Positioned(
+      top: 130,
+      right: 40,
+      child: Container(
+        width: 300,
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: Colors.black.withOpacity(0.8),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.white10),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Stream Information',
+              style: theme.textTheme.titleMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            _InfoRow(label: 'Title', value: app_player_state.PlayerState.title),
+            _InfoRow(label: 'Resolution', value: '${track.w} x ${track.h}'),
+            _InfoRow(label: 'FPS', value: track.fps?.toStringAsFixed(2) ?? 'N/A'),
+            _InfoRow(label: 'Bitrate', value: track.bitrate != null ? '${(track.bitrate! / 1000).toStringAsFixed(0)} kbps' : 'N/A'),
+            _InfoRow(label: 'Codec', value: track.codec ?? 'N/A'),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSidePanel(ThemeData theme) {
+    final channels = app_player_state.PlayerState.queue ?? [];
+    
+    return Positioned(
+      top: 0,
+      right: 0,
+      bottom: 0,
+      width: 350,
+      child: Container(
+        decoration: BoxDecoration(
+          color: theme.scaffoldBackgroundColor.withOpacity(0.95),
+          boxShadow: const [BoxShadow(color: Colors.black54, blurRadius: 20)],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 60, 24, 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Channel List',
+                    style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded),
+                    onPressed: () => setState(() => _showSidePanel = false),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(),
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                itemCount: channels.length,
+                itemBuilder: (context, index) {
+                  final channel = channels[index];
+                  final isPlaying = app_player_state.PlayerState.currentIndex == index;
+                  
+                  return ListTile(
+                    selected: isPlaying,
+                    selectedTileColor: theme.colorScheme.primary.withOpacity(0.1),
+                    leading: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(4),
+                        color: Colors.white10,
+                      ),
+                      child: channel.imageUrl.isNotEmpty
+                          ? Image.network(channel.imageUrl)
+                          : const Icon(Icons.live_tv, size: 20, color: Colors.white24),
+                    ),
+                    title: Text(
+                      channel.name,
+                      style: TextStyle(
+                        color: isPlaying ? theme.colorScheme.primary : Colors.white,
+                        fontWeight: isPlaying ? FontWeight.bold : FontWeight.normal,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    onTap: () {
+                      app_player_state.PlayerState.currentIndex = index;
+                      app_player_state.PlayerState.title = channel.name;
+                      widget.player.open(Media(channel.id));
+                      setState(() => _showSidePanel = false);
+                    },
+                  );
+                },
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.explore_outlined),
+                  label: const Text('Discover other categories'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.white70,
+                    side: const BorderSide(color: Colors.white10),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _InfoRow extends StatelessWidget {
+  final String label;
+  final String value;
+  const _InfoRow({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: const TextStyle(color: Colors.white54, fontSize: 13)),
+          Text(value, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+        ],
       ),
     );
   }
@@ -227,19 +513,19 @@ class _PlayerControlBtn extends StatelessWidget {
             onTap: onPressed,
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
-              width: isLarge ? 80 : 60,
-              height: isLarge ? 80 : 60,
+              width: isLarge ? 64 : 48,
+              height: isLarge ? 64 : 48,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: focused ? theme.colorScheme.primary : Colors.white10,
                 boxShadow: focused ? [
-                  BoxShadow(color: theme.colorScheme.primary.withOpacity(0.5), blurRadius: 20, spreadRadius: 2)
+                  BoxShadow(color: theme.colorScheme.primary.withOpacity(0.5), blurRadius: 15, spreadRadius: 1)
                 ] : [],
               ),
               child: Icon(
                 icon,
                 color: focused ? Colors.white : Colors.white70,
-                size: isLarge ? 48 : 32,
+                size: isLarge ? 40 : 24,
               ),
             ),
           );

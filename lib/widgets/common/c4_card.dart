@@ -8,8 +8,8 @@ class C4Card extends StatefulWidget {
   final String title;
   final String? subtitle;
   final VoidCallback? onTap;
-  final double width;
-  final double height;
+  final double? width;
+  final double? height;
   final List<Widget>? badges;
   final bool showProgress;
   final double? progress;
@@ -22,8 +22,8 @@ class C4Card extends StatefulWidget {
     required this.title,
     this.subtitle,
     this.onTap,
-    this.width = 160,
-    this.height = 240,
+    this.width,
+    this.height,
     this.badges,
     this.showProgress = false,
     this.progress,
@@ -41,7 +41,7 @@ class _C4CardState extends State<C4Card> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isVOD = widget.height > widget.width;
+    final isVOD = (widget.height ?? 1.5) >= (widget.width ?? 1.0);
 
     return Focus(
       focusNode: widget.focusNode,

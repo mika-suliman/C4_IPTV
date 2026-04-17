@@ -445,6 +445,26 @@ class Favorites extends Table {
   Set<Column> get primaryKey => {id};
 }
 
+@DataClassName('WatchLaterData')
+class WatchLaters extends Table {
+  TextColumn get id => text()();
+
+  TextColumn get playlistId => text()();
+
+  IntColumn get contentType => intEnum<ContentType>()();
+
+  TextColumn get streamId => text()();
+
+  TextColumn get title => text()();
+
+  TextColumn get imagePath => text().nullable()();
+
+  DateTimeColumn get addedAt => dateTime().withDefault(currentDateAndTime)();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
 @DriftDatabase(
   tables: [
     Playlists,
@@ -462,6 +482,7 @@ class Favorites extends Table {
     M3uSeries,
     M3uEpisodes,
     Favorites,
+    WatchLaters,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -489,7 +510,7 @@ class AppDatabase extends _$AppDatabase {
       );
 
   @override
-  int get schemaVersion => 8;
+  int get schemaVersion => 9;
 
   // === PLAYLIST İŞLEMLERİ ===
 
@@ -1594,6 +1615,34 @@ class AppDatabase extends _$AppDatabase {
     return result.length;
   }
 
+  // === WATCH LATER İŞLEMLERİ ===
+
+  Future<List<WatchLaterData>> getWatchLaterItems(String playlistId) async {
+    final query = select(watchLaters)
+      ..where((f) => f.playlistId.equals(playlistId))
+      ..orderBy([(f) => OrderingTerm.desc(f.addedAt)]);
+    return await query.get();
+  }
+
+  Future<void> insertWatchLater(WatchLaterData data) async {
+    await into(watchLaters).insert(data);
+  }
+
+  Future<void> deleteWatchLater(
+    String playlistId,
+    String streamId,
+    ContentType contentType,
+  ) async {
+    await (delete(watchLaters)
+          ..where(
+            (f) =>
+                f.playlistId.equals(playlistId) &
+                f.streamId.equals(streamId) &
+                f.contentType.equals(contentType.index),
+          ))
+        .go();
+  }
+
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (Migrator m) async {
@@ -1649,6 +1698,7 @@ class AppDatabase extends _$AppDatabase {
       if (from <= 8) {
         await m.addColumn(vodStreams, vodStreams.genre);
         await m.addColumn(vodStreams, vodStreams.youtubeTrailer);
+        await m.createTable(watchLaters);
       }
     },
   );

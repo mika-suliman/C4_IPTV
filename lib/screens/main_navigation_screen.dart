@@ -4,13 +4,15 @@ import '../models/playlist_model.dart';
 import '../models/content_type.dart';
 import '../controllers/xtream_code_home_controller.dart';
 import '../controllers/m3u_home_controller.dart';
+import '../controllers/watch_history_controller.dart';
+import '../controllers/favorites_controller.dart';
+import '../controllers/watch_later_controller.dart';
 import '../l10n/localization_extension.dart';
 import 'main_shell_screen.dart';
 import 'common/c4_dashboard.dart';
 import 'common/c4_live_grid_screen.dart';
 import 'common/c4_content_grid_screen.dart';
 import '../widgets/common/c4_search_modal.dart';
-import 'xtream-codes/xtream_code_home_screen.dart';
 import 'm3u/m3u_home_screen.dart';
 import 'watch_history_screen.dart';
 import 'xtream-codes/xtream_code_playlist_settings_screen.dart';
@@ -101,15 +103,22 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         setState(() => _selectedIndex = index);
       },
       onSearchTap: () => C4SearchModal.show(context),
-      child: widget.playlist.type == PlaylistType.xtream
-          ? ChangeNotifierProvider<XtreamCodeHomeController>.value(
+      child: MultiProvider(
+        providers: [
+          if (widget.playlist.type == PlaylistType.xtream)
+            ChangeNotifierProvider<XtreamCodeHomeController>.value(
               value: _controller as XtreamCodeHomeController,
-              child: _buildContent(),
             )
-          : ChangeNotifierProvider<M3UHomeController>.value(
+          else
+            ChangeNotifierProvider<M3UHomeController>.value(
               value: _controller as M3UHomeController,
-              child: _buildContent(),
             ),
+          ChangeNotifierProvider(create: (_) => WatchHistoryController()),
+          ChangeNotifierProvider(create: (_) => FavoritesController()),
+          ChangeNotifierProvider(create: (_) => WatchLaterController()),
+        ],
+        child: _buildContent(),
+      ),
     );
   }
 }

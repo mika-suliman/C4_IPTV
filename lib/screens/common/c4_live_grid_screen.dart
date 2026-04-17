@@ -75,8 +75,8 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen> {
                 const SizedBox(height: 20),
                 Expanded(
                   child: GridView.builder(
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 4,
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: _getCrossAxisCount(context),
                       childAspectRatio: 16 / 10,
                       crossAxisSpacing: 16,
                       mainAxisSpacing: 16,
@@ -163,6 +163,17 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen> {
         ),
       ],
     );
+  }
+
+  int _getCrossAxisCount(BuildContext context) {
+    double width = MediaQuery.of(context).size.width;
+    // Account for sidebar width (200) and padding (48)
+    double availableWidth = width - 200 - 48;
+    if (availableWidth > 1400) return 6;
+    if (availableWidth > 1100) return 5;
+    if (availableWidth > 800) return 4;
+    if (availableWidth > 500) return 3;
+    return 2;
   }
 }
 
