@@ -25,7 +25,7 @@ import '../m3u/m3u_data_loader_screen.dart';
 import '../playlist_screen.dart';
 import '../xtream-codes/xtream_code_data_loader_screen.dart';
 import 'category_settings_section.dart';
-import 'live_tv_settings_section.dart';
+import 'home_customization_section.dart';
 import '../../utils/app_config.dart';
 
 final controller = XtreamCodeHomeController(true);
@@ -398,7 +398,7 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget> {
                 ),
               ),
               const SizedBox(height: 10),
-              const LiveTvSettingsSection(),
+              const HomeCustomizationSection(),
               const SizedBox(height: 10),
               SectionTitleWidget(title: context.loc.about),
               Card(

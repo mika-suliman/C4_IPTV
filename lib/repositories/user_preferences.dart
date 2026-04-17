@@ -1,6 +1,8 @@
+import 'dart:convert';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../models/home_rail_config.dart';
 
 class UserPreferences {
   static const String _keyLastPlaylist = 'last_playlist';
@@ -26,6 +28,7 @@ class UserPreferences {
   static const String _keySeekGesture = 'seek_gesture';
   static const String _keySpeedUpOnLongPress = 'speed_up_on_long_press';
   static const String _keySeekOnDoubleTap = 'seek_on_double_tap';
+  static const String _homeRailsKey = 'home_rails_config';
 
   // Live TV settings
   static const String _keyLiveTvListStyle = 'live_tv_list_style';
@@ -356,5 +359,24 @@ class UserPreferences {
   static Future<void> setLiveTvSortOrder(String value) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_keyLiveTvSortOrder, value);
+  }
+
+  static Future<List<HomeRailConfig>> getHomeRails() async {
+    final prefs = await SharedPreferences.getInstance();
+    final jsonString = prefs.getString(_homeRailsKey);
+    if (jsonString == null) return [];
+
+    try {
+      final List<dynamic> jsonList = json.decode(jsonString);
+      return jsonList.map((j) => HomeRailConfig.fromJson(j)).toList();
+    } catch (e) {
+      return [];
+    }
+  }
+
+  static Future<void> setHomeRails(List<HomeRailConfig> rails) async {
+    final prefs = await SharedPreferences.getInstance();
+    final jsonString = json.encode(rails.map((r) => r.toJson()).toList());
+    await prefs.setString(_homeRailsKey, jsonString);
   }
 }

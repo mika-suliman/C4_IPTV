@@ -1721,6 +1721,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No favorites found'**
   String get no_favorites_found;
+
+  /// No description provided for @home_customization.
+  ///
+  /// In en, this message translates to:
+  /// **'Home Customization'**
+  String get home_customization;
+
+  /// No description provided for @home_customization_subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Drag to reorder, toggle to show or hide sections'**
+  String get home_customization_subtitle;
+
+  /// No description provided for @rail_continue_watching.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue Watching'**
+  String get rail_continue_watching;
+
+  /// No description provided for @rail_recommended.
+  ///
+  /// In en, this message translates to:
+  /// **'Recommended for you'**
+  String get rail_recommended;
+
+  /// No description provided for @rail_favorites_live.
+  ///
+  /// In en, this message translates to:
+  /// **'Favorite Channels'**
+  String get rail_favorites_live;
+
+  /// No description provided for @rail_favorites_movies.
+  ///
+  /// In en, this message translates to:
+  /// **'Favorite Movies'**
+  String get rail_favorites_movies;
+
+  /// No description provided for @rail_favorites_series.
+  ///
+  /// In en, this message translates to:
+  /// **'Favorite Series'**
+  String get rail_favorites_series;
+
+  /// No description provided for @rail_watch_later.
+  ///
+  /// In en, this message translates to:
+  /// **'Watch Later'**
+  String get rail_watch_later;
+
+  /// No description provided for @rail_live_history.
+  ///
+  /// In en, this message translates to:
+  /// **'Recently Watched'**
+  String get rail_live_history;
+
+  /// No description provided for @rail_trending_movies.
+  ///
+  /// In en, this message translates to:
+  /// **'Trending Movies'**
+  String get rail_trending_movies;
+
+  /// No description provided for @rail_trending_series.
+  ///
+  /// In en, this message translates to:
+  /// **'Trending Series'**
+  String get rail_trending_series;
 }
 
 class _AppLocalizationsDelegate

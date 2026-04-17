@@ -874,4 +874,38 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get no_favorites_found => 'No favorites found';
+
+  @override
+  String get home_customization => 'Home Customization';
+
+  @override
+  String get home_customization_subtitle =>
+      'Drag to reorder, toggle to show or hide sections';
+
+  @override
+  String get rail_continue_watching => 'Continue Watching';
+
+  @override
+  String get rail_recommended => 'Recommended for you';
+
+  @override
+  String get rail_favorites_live => 'Favorite Channels';
+
+  @override
+  String get rail_favorites_movies => 'Favorite Movies';
+
+  @override
+  String get rail_favorites_series => 'Favorite Series';
+
+  @override
+  String get rail_watch_later => 'Watch Later';
+
+  @override
+  String get rail_live_history => 'Recently Watched';
+
+  @override
+  String get rail_trending_movies => 'Trending Movies';
+
+  @override
+  String get rail_trending_series => 'Trending Series';
 }

@@ -299,5 +299,16 @@
   "added_to_watch_later": "Added to Watch Later",
   "removed_from_watch_later": "Removed from Watch Later",
   "live_tv": "Live TV",
-  "no_favorites_found": "No favorites found"
+  "no_favorites_found": "No favorites found",
+  "home_customization": "Home Customization",
+  "home_customization_subtitle": "Drag to reorder, toggle to show or hide sections",
+  "rail_continue_watching": "Continue Watching",
+  "rail_recommended": "Recommended for you",
+  "rail_favorites_live": "Favorite Channels",
+  "rail_favorites_movies": "Favorite Movies",
+  "rail_favorites_series": "Favorite Series",
+  "rail_watch_later": "Watch Later",
+  "rail_live_history": "Recently Watched",
+  "rail_trending_movies": "Trending Movies",
+  "rail_trending_series": "Trending Series"
 }

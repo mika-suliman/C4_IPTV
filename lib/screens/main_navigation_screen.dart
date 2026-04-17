@@ -7,6 +7,7 @@ import '../controllers/m3u_home_controller.dart';
 import '../controllers/watch_history_controller.dart';
 import '../controllers/favorites_controller.dart';
 import '../controllers/watch_later_controller.dart';
+import '../controllers/home_rails_controller.dart';
 import '../l10n/localization_extension.dart';
 import 'main_shell_screen.dart';
 import 'common/c4_dashboard.dart';
@@ -122,6 +123,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           ChangeNotifierProvider(create: (_) => WatchHistoryController()),
           ChangeNotifierProvider(create: (_) => FavoritesController()),
           ChangeNotifierProvider(create: (_) => WatchLaterController()),
+          ChangeNotifierProvider(create: (_) => HomeRailsController()..load()),
         ],
         child: _buildContent(),
       ),

@@ -4,6 +4,7 @@ import '../../controllers/xtream_code_home_controller.dart';
 import '../../controllers/watch_history_controller.dart';
 import '../../controllers/favorites_controller.dart';
 import '../../controllers/watch_later_controller.dart';
+import '../../controllers/home_rails_controller.dart';
 import '../../l10n/localization_extension.dart';
 import '../../models/content_type.dart';
 import '../../models/playlist_content_model.dart';
@@ -26,7 +27,8 @@ class C4Dashboard extends StatefulWidget {
 
 class _C4DashboardState extends State<C4Dashboard> {
   final TmdbService _tmdbService = TmdbService();
-  List<ContentItem> _trendingItems = [];
+  List<ContentItem> _trendingMovies = [];
+  List<ContentItem> _trendingSeries = [];
 
   @override
   void initState() {
@@ -42,21 +44,22 @@ class _C4DashboardState extends State<C4Dashboard> {
 
     if (mounted) {
       setState(() {
-        _trendingItems = [
-          ...trendingMovies.map((m) => ContentItem(
-                m['id'].toString(),
-                m['title'] ?? m['name'] ?? '',
-                _tmdbService.getPosterUrl(m['poster_path']),
-                ContentType.vod,
-              )),
-          ...trendingTv.map((m) => ContentItem(
-                m['id'].toString(),
-                m['name'] ?? m['title'] ?? '',
-                _tmdbService.getPosterUrl(m['poster_path']),
-                ContentType.series,
-              )),
-        ];
-        _trendingItems.shuffle();
+        _trendingMovies = trendingMovies
+            .map((m) => ContentItem(
+                  m['id'].toString(),
+                  m['title'] ?? m['name'] ?? '',
+                  _tmdbService.getPosterUrl(m['poster_path']),
+                  ContentType.vod,
+                ))
+            .toList();
+        _trendingSeries = trendingTv
+            .map((m) => ContentItem(
+                  m['id'].toString(),
+                  m['name'] ?? m['title'] ?? '',
+                  _tmdbService.getPosterUrl(m['poster_path']),
+                  ContentType.series,
+                ))
+            .toList();
       });
     }
 
@@ -79,207 +82,240 @@ class _C4DashboardState extends State<C4Dashboard> {
     final historyController = context.watch<WatchHistoryController>();
     final favoritesController = context.watch<FavoritesController>();
     final watchLaterController = context.watch<WatchLaterController>();
+    final homeRailsController = context.watch<HomeRailsController>();
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final width = constraints.maxWidth;
-        final horizontalPadding = width < 900 ? 24.0 : 48.0;
+        final visibleRails = homeRailsController.visibleRails;
 
         return ListView(
           padding: EdgeInsets.zero,
           children: [
-            // 1. Hero Section
+            // Hero Section is always first (not togglable for now based on request)
             if (xtreamController.heroItem != null)
               C4DashboardHero(item: xtreamController.heroItem!),
 
             const SizedBox(height: 32),
 
-            // 2. Recommended for you
-            if (xtreamController.recommendations.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 32),
-                child: C4ContentRail(
-                  title: 'Recommended for you',
-                  items: xtreamController.recommendations,
-                ),
-              ),
-
-            // 3. Favorite Channels
-            if (favoritesController.liveStreamFavorites.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 32),
-                child: C4ContentRail(
-                  title: 'Favorite Channels',
-                  items: favoritesController.liveStreamFavorites
-                      .map((f) => ContentItem(
-                            f.streamId,
-                            f.name,
-                            f.imagePath ?? '',
-                            f.contentType,
-                          ))
-                      .toList(),
-                  isPortrait: false,
-                  onItemTap: (ctx, item) {
-                    final fav = favoritesController.liveStreamFavorites.firstWhere(
-                      (f) =>
-                          f.streamId == item.id &&
-                          f.contentType == item.contentType,
-                      orElse: () => throw Exception('Favorite not found'),
-                    );
-                    favoritesController.playFavorite(ctx, fav);
-                  },
-                ),
-              ),
-
-            // 4. Favorite Movies
-            if (favoritesController.movieFavorites.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 32),
-                child: C4ContentRail(
-                  title: 'Favorite Movies',
-                  items: favoritesController.movieFavorites
-                      .map((f) => ContentItem(
-                            f.streamId,
-                            f.name,
-                            f.imagePath ?? '',
-                            f.contentType,
-                          ))
-                      .toList(),
-                  onItemTap: (ctx, item) {
-                    final fav = favoritesController.movieFavorites.firstWhere(
-                      (f) =>
-                          f.streamId == item.id &&
-                          f.contentType == item.contentType,
-                      orElse: () => throw Exception('Favorite not found'),
-                    );
-                    favoritesController.playFavorite(ctx, fav);
-                  },
-                ),
-              ),
-
-            // 5. Favorite Series
-            if (favoritesController.seriesFavorites.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 32),
-                child: C4ContentRail(
-                  title: 'Favorite Series',
-                  items: favoritesController.seriesFavorites
-                      .map((f) => ContentItem(
-                            f.streamId,
-                            f.name,
-                            f.imagePath ?? '',
-                            f.contentType,
-                          ))
-                      .toList(),
-                  onItemTap: (ctx, item) {
-                    final fav = favoritesController.seriesFavorites.firstWhere(
-                      (f) =>
-                          f.streamId == item.id &&
-                          f.contentType == item.contentType,
-                      orElse: () => throw Exception('Favorite not found'),
-                    );
-                    favoritesController.playFavorite(ctx, fav);
-                  },
-                ),
-              ),
-
-            // 6. Watch later
-            if (watchLaterController.watchLaterItems.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 32),
-                child: C4ContentRail(
-                  title: 'Watch later',
-                  items: watchLaterController.watchLaterItems
-                      .map((h) => ContentItem(
-                            h.streamId,
-                            h.title,
-                            h.imagePath ?? '',
-                            h.contentType,
-                          ))
-                      .toList(),
-                  onItemTap: (ctx, item) {
-                    final data = watchLaterController.watchLaterItems.firstWhere(
-                      (i) => i.streamId == item.id && i.contentType == item.contentType,
-                    );
-                    watchLaterController.playContent(ctx, data);
-                  },
-                ),
-              ),
-
-            // 7. Continue watching
-            if (historyController.continueWatching.isNotEmpty)
-              Padding(
-                padding: EdgeInsets.only(bottom: 32),
-                child: C4ContentRail(
-                  title: context.loc.continue_watching,
-                  items: historyController.continueWatching
-                      .where((h) => h.contentType != ContentType.liveStream)
-                      .map((h) => ContentItem(
-                            h.streamId,
-                            h.title,
-                            h.imagePath ?? '',
-                            h.contentType,
-                          ))
-                      .toList(),
-                  onItemTap: (ctx, item) {
-                    final h = historyController.continueWatching.firstWhere(
-                      (wh) =>
-                          wh.streamId == item.id &&
-                          wh.contentType == item.contentType,
-                      orElse: () =>
-                          throw Exception('WatchHistory not found for item'),
-                    );
-                    historyController.playContent(ctx, h);
-                  },
-                ),
-              ),
-
-            // 8. Recent channels
-            if (historyController.liveHistory.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 32),
-                child: C4ContentRail(
-                  title: 'Recently watched channels',
-                  items: historyController.liveHistory
-                      .map((h) => ContentItem(
-                            h.streamId,
-                            h.title,
-                            h.imagePath ?? '',
-                            h.contentType,
-                          ))
-                      .toList(),
-                  isPortrait: false,
-                  onItemTap: (ctx, item) {
-                    final h = historyController.liveHistory.firstWhere(
-                      (wh) =>
-                          wh.streamId == item.id &&
-                          wh.contentType == item.contentType,
-                      orElse: () =>
-                          throw Exception('WatchHistory not found for item'),
-                    );
-                    historyController.playContent(ctx, h);
-                  },
-                ),
-              ),
-
-            // 9. Trending this week (TMDB)
-            if (_trendingItems.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 32),
-                child: C4ContentRail(
-                  title: 'Trending this week',
-                  items: _trendingItems,
-                  onItemTap: (ctx, item) => _playTmdbItem(ctx, item),
-                ),
-              ),
-
-            const SizedBox(height: 64),
+            for (final rail in visibleRails) ...[
+              _buildRail(context, rail.id, xtreamController, historyController,
+                  favoritesController, watchLaterController),
+            ],
 
             const SizedBox(height: 64),
           ],
         );
       },
     );
+  }
+
+  Widget _buildRail(
+    BuildContext context,
+    String id,
+    XtreamCodeHomeController xtreamController,
+    WatchHistoryController historyController,
+    FavoritesController favoritesController,
+    WatchLaterController watchLaterController,
+  ) {
+    switch (id) {
+      case 'recommended':
+        if (xtreamController.recommendations.isEmpty)
+          return const SizedBox.shrink();
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 32),
+          child: C4ContentRail(
+            title: context.loc.rail_recommended,
+            items: xtreamController.recommendations,
+          ),
+        );
+
+      case 'favorites_live':
+        if (favoritesController.liveStreamFavorites.isEmpty)
+          return const SizedBox.shrink();
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 32),
+          child: C4ContentRail(
+            title: context.loc.rail_favorites_live,
+            items: favoritesController.liveStreamFavorites
+                .map((f) => ContentItem(
+                      f.streamId,
+                      f.name,
+                      f.imagePath ?? '',
+                      f.contentType,
+                    ))
+                .toList(),
+            isPortrait: false,
+            onItemTap: (ctx, item) {
+              final fav = favoritesController.liveStreamFavorites.firstWhere(
+                (f) =>
+                    f.streamId == item.id && f.contentType == item.contentType,
+                orElse: () => throw Exception('Favorite not found'),
+              );
+              favoritesController.playFavorite(ctx, fav);
+            },
+          ),
+        );
+
+      case 'favorites_movies':
+        if (favoritesController.movieFavorites.isEmpty)
+          return const SizedBox.shrink();
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 32),
+          child: C4ContentRail(
+            title: context.loc.rail_favorites_movies,
+            items: favoritesController.movieFavorites
+                .map((f) => ContentItem(
+                      f.streamId,
+                      f.name,
+                      f.imagePath ?? '',
+                      f.contentType,
+                    ))
+                .toList(),
+            onItemTap: (ctx, item) {
+              final fav = favoritesController.movieFavorites.firstWhere(
+                (f) =>
+                    f.streamId == item.id && f.contentType == item.contentType,
+                orElse: () => throw Exception('Favorite not found'),
+              );
+              favoritesController.playFavorite(ctx, fav);
+            },
+          ),
+        );
+
+      case 'favorites_series':
+        if (favoritesController.seriesFavorites.isEmpty)
+          return const SizedBox.shrink();
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 32),
+          child: C4ContentRail(
+            title: context.loc.rail_favorites_series,
+            items: favoritesController.seriesFavorites
+                .map((f) => ContentItem(
+                      f.streamId,
+                      f.name,
+                      f.imagePath ?? '',
+                      f.contentType,
+                    ))
+                .toList(),
+            onItemTap: (ctx, item) {
+              final fav = favoritesController.seriesFavorites.firstWhere(
+                (f) =>
+                    f.streamId == item.id && f.contentType == item.contentType,
+                orElse: () => throw Exception('Favorite not found'),
+              );
+              favoritesController.playFavorite(ctx, fav);
+            },
+          ),
+        );
+
+      case 'watch_later':
+        if (watchLaterController.watchLaterItems.isEmpty)
+          return const SizedBox.shrink();
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 32),
+          child: C4ContentRail(
+            title: context.loc.rail_watch_later,
+            items: watchLaterController.watchLaterItems
+                .map((h) => ContentItem(
+                      h.streamId,
+                      h.title,
+                      h.imagePath ?? '',
+                      h.contentType,
+                    ))
+                .toList(),
+            onItemTap: (ctx, item) {
+              final data = watchLaterController.watchLaterItems.firstWhere(
+                (i) =>
+                    i.streamId == item.id && i.contentType == item.contentType,
+              );
+              watchLaterController.playContent(ctx, data);
+            },
+          ),
+        );
+
+      case 'continue_watching':
+        if (historyController.continueWatching.isEmpty)
+          return const SizedBox.shrink();
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 32),
+          child: C4ContentRail(
+            title: context.loc.rail_continue_watching,
+            items: historyController.continueWatching
+                .where((h) => h.contentType != ContentType.liveStream)
+                .map((h) => ContentItem(
+                      h.streamId,
+                      h.title,
+                      h.imagePath ?? '',
+                      h.contentType,
+                    ))
+                .toList(),
+            onItemTap: (ctx, item) {
+              final h = historyController.continueWatching.firstWhere(
+                (wh) =>
+                    wh.streamId == item.id &&
+                    wh.contentType == item.contentType,
+                orElse: () =>
+                    throw Exception('WatchHistory not found for item'),
+              );
+              historyController.playContent(ctx, h);
+            },
+          ),
+        );
+
+      case 'live_history':
+        if (historyController.liveHistory.isEmpty)
+          return const SizedBox.shrink();
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 32),
+          child: C4ContentRail(
+            title: context.loc.rail_live_history,
+            items: historyController.liveHistory
+                .map((h) => ContentItem(
+                      h.streamId,
+                      h.title,
+                      h.imagePath ?? '',
+                      h.contentType,
+                    ))
+                .toList(),
+            isPortrait: false,
+            onItemTap: (ctx, item) {
+              final h = historyController.liveHistory.firstWhere(
+                (wh) =>
+                    wh.streamId == item.id &&
+                    wh.contentType == item.contentType,
+                orElse: () =>
+                    throw Exception('WatchHistory not found for item'),
+              );
+              historyController.playContent(ctx, h);
+            },
+          ),
+        );
+
+      case 'trending_movies':
+        if (_trendingMovies.isEmpty) return const SizedBox.shrink();
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 32),
+          child: C4ContentRail(
+            title: context.loc.rail_trending_movies,
+            items: _trendingMovies,
+            onItemTap: (ctx, item) => _playTmdbItem(ctx, item),
+          ),
+        );
+
+      case 'trending_series':
+        if (_trendingSeries.isEmpty) return const SizedBox.shrink();
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 32),
+          child: C4ContentRail(
+            title: context.loc.rail_trending_series,
+            items: _trendingSeries,
+            onItemTap: (ctx, item) => _playTmdbItem(ctx, item),
+          ),
+        );
+
+      default:
+        return const SizedBox.shrink();
+    }
   }
 
   Future<void> _playTmdbItem(BuildContext context, ContentItem item) async {
