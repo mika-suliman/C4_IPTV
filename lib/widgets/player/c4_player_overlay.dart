@@ -7,6 +7,8 @@ import 'package:window_manager/window_manager.dart';
 import 'dart:io';
 import '../../controllers/xtream_code_home_controller.dart';
 import '../../services/player_state.dart' as app_player_state;
+import '../../models/content_type.dart';
+import '../../models/category_view_model.dart';
 import '../../utils/get_playlist_type.dart';
 
 class C4PlayerOverlay extends StatefulWidget {
@@ -77,6 +79,14 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
         _bitrate = video.bitrate != null && video.bitrate! > 0 ? video.bitrate : _bitrate;
         _codec = video.codec ?? _codec;
       })),
+      widget.player.stream.track.listen((track) {
+        if (mounted) {
+          setState(() {
+            app_player_state.PlayerState.subtitles = widget.player.state.tracks.subtitle;
+            app_player_state.PlayerState.selectedSubtitle = widget.player.state.track.subtitle;
+          });
+        }
+      }),
     ];
     
     // Initial check for fullscreen
@@ -165,6 +175,80 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
         _isTogglingFullscreen = false;
       }
     }
+  }
+
+  void _openSubtitleSelector() {
+    _startHideTimer();
+    final theme = Theme.of(context);
+    final subs = app_player_state.PlayerState.subtitles;
+    final selected = app_player_state.PlayerState.selectedSubtitle;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: BoxDecoration(
+          color: theme.scaffoldBackgroundColor.withOpacity(0.95),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Text(
+                'Subtitle Selection',
+                style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+              ),
+            ),
+            const Divider(height: 1),
+            Flexible(
+              child: ListView(
+                shrinkWrap: true,
+                children: [
+                   _buildSubtitleTile('Auto', SubtitleTrack.auto(), selected, theme),
+                   _buildSubtitleTile('Off', SubtitleTrack.no(), selected, theme),
+                   ...subs.map((track) => _buildSubtitleTile(
+                     '${track.language ?? "Unknown"} ${track.title ?? ""}'.trim(), 
+                     track, 
+                     selected, 
+                     theme
+                   )),
+                ],
+              ),
+            ),
+            const SizedBox(height: 32),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSubtitleTile(String title, SubtitleTrack track, SubtitleTrack selected, ThemeData theme) {
+    final isSelected = selected == track;
+    return ListTile(
+      leading: Icon(
+        isSelected ? Icons.check_circle_rounded : Icons.circle_outlined,
+        color: isSelected ? theme.colorScheme.primary : Colors.white24,
+      ),
+      title: Text(
+        title,
+        style: TextStyle(
+          color: isSelected ? Colors.white : Colors.white70,
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+        ),
+      ),
+      onTap: () {
+        widget.player.setSubtitleTrack(track);
+        Navigator.pop(context);
+      },
+    );
+  }
+
+  ContentType? _currentContentType() {
+    final queue = app_player_state.PlayerState.queue;
+    if (queue == null || queue.isEmpty) return null;
+    return queue.first.contentType;
   }
 
   void _adjustVolume(double delta) {
@@ -281,6 +365,15 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
                 _showInfoPanel = false;
                 _startHideTimer();
               }),
+            ),
+            IconButton(
+              icon: Icon(
+                Icons.subtitles_rounded,
+                color: app_player_state.PlayerState.selectedSubtitle == SubtitleTrack.no() 
+                    ? Colors.white 
+                    : theme.colorScheme.primary,
+              ),
+              onPressed: _openSubtitleSelector,
             ),
             const SizedBox(width: 8),
             IconButton(
@@ -568,7 +661,14 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
   }
 
   Widget _buildCategoryListView(ThemeData theme, XtreamCodeHomeController? homeController) {
-    if (homeController == null) {
+    final categories = homeController == null ? <CategoryViewModel>[] : (() {
+      final type = _currentContentType();
+      if (type == ContentType.vod) return homeController.visibleMovieCategories;
+      if (type == ContentType.series) return homeController.visibleSeriesCategories;
+      return homeController.liveCategories ?? [];
+    })();
+
+    if (homeController == null || categories.isEmpty) {
       return const Center(
         child: Padding(
           padding: EdgeInsets.all(20.0),
@@ -580,7 +680,6 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
         ),
       );
     }
-    final categories = homeController.liveCategories ?? [];
     
     return ListView.builder(
       padding: const EdgeInsets.symmetric(vertical: 8),
