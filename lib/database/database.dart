@@ -1629,7 +1629,7 @@ class AppDatabase extends _$AppDatabase {
     return result.length;
   }
 
-  // ===  WATCH LATER CRUD ===
+  // === WATCH LATER OPERATIONS ===
 
   Future<List<WatchLaterData>> getWatchLaterItems(String playlistId) async {
     return await (select(watchLaters)
@@ -1639,7 +1639,17 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Future<void> insertWatchLater(WatchLaterData entry) async {
-    await into(watchLaters).insertOnConflictUpdate(entry);
+    await into(watchLaters).insertOnConflictUpdate(
+      WatchLatersCompanion(
+        id: Value(entry.id),
+        playlistId: Value(entry.playlistId),
+        contentType: Value(entry.contentType),
+        streamId: Value(entry.streamId),
+        title: Value(entry.title),
+        imagePath: Value(entry.imagePath),
+        addedAt: Value(entry.addedAt),
+      ),
+    );
   }
 
   Future<void> deleteWatchLater(
@@ -1649,10 +1659,10 @@ class AppDatabase extends _$AppDatabase {
   ) async {
     await (delete(watchLaters)
           ..where(
-            (f) =>
-                f.playlistId.equals(playlistId) &
-                f.streamId.equals(streamId) &
-                f.contentType.equalsValue(contentType),
+            (tbl) =>
+                tbl.playlistId.equals(playlistId) &
+                tbl.streamId.equals(streamId) &
+                tbl.contentType.equals(contentType.index),
           ))
         .go();
   }
@@ -1669,6 +1679,34 @@ class AppDatabase extends _$AppDatabase {
       if (from < 9) {
         await m.createTable(watchLaters);
       }
+    },
+    beforeOpen: (OpeningDetails details) async {
+      // Safety net: create tables if they somehow don't exist yet
+      await customStatement(
+        'CREATE TABLE IF NOT EXISTS watch_laters ('
+        '  id TEXT NOT NULL PRIMARY KEY,'
+        '  playlist_id TEXT NOT NULL,'
+        '  content_type INTEGER NOT NULL,'
+        '  stream_id TEXT NOT NULL,'
+        '  title TEXT NOT NULL,'
+        '  image_path TEXT,'
+        '  added_at INTEGER NOT NULL'
+        ');',
+      );
+      await customStatement(
+        'CREATE TABLE IF NOT EXISTS favorites ('
+        '  id TEXT NOT NULL PRIMARY KEY,'
+        '  playlist_id TEXT NOT NULL,'
+        '  content_type INTEGER NOT NULL,'
+        '  stream_id TEXT NOT NULL,'
+        '  episode_id TEXT,'
+        '  m3u_item_id TEXT,'
+        '  name TEXT NOT NULL,'
+        '  image_path TEXT,'
+        '  created_at INTEGER NOT NULL,'
+        '  updated_at INTEGER NOT NULL'
+        ');',
+      );
     },
   );
 
