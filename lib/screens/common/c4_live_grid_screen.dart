@@ -5,15 +5,12 @@ import 'package:window_manager/window_manager.dart';
 import '../../controllers/xtream_code_home_controller.dart';
 import '../../controllers/favorites_controller.dart';
 import '../../l10n/localization_extension.dart';
+import '../../models/category_view_model.dart';
 import '../../models/playlist_content_model.dart';
 import '../../services/fullscreen_notifier.dart';
 import '../../utils/navigate_by_content_type.dart';
 import '../../widgets/player_widget.dart';
 
-// - [x] Stabilize MainShellScreen widget tree to prevent child state loss
-// - [x] Fix dispose crash and add debug logs in C4LiveGridScreen
-// - [x] Fix unmodifiable list error and add debug logs in PlayerWidget
-// - [/] Verify fix with logs and flutter analyze
 class C4LiveGridScreen extends StatefulWidget {
   const C4LiveGridScreen({super.key});
 
@@ -96,6 +93,299 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen> with AutomaticKeepA
     );
   }
 
+  Widget _buildLayoutWithoutPlayer(
+    ThemeData theme,
+    XtreamCodeHomeController controller,
+    FavoritesController favoritesController,
+    List<CategoryViewModel> categories,
+    List<ContentItem> filteredChannels,
+  ) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // 1. Categories Sidebar (Left, 200px)
+        Container(
+          width: 200,
+          decoration: BoxDecoration(
+            border: Border(right: BorderSide(color: theme.dividerColor.withValues(alpha: 0.1), width: 1)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Text(
+                  context.loc.live_streams.toUpperCase(),
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    letterSpacing: 1.2,
+                    fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+              ),
+              Expanded(
+                child: ListView.builder(
+                  itemCount: categories.length,
+                  itemBuilder: (context, index) {
+                    final isSelected = _selectedCategoryIndex == index;
+                    return _CategoryTile(
+                      title: categories[index].category.categoryName,
+                      isSelected: isSelected,
+                      onTap: () {
+                        setState(() {
+                          _selectedCategoryIndex = index;
+                          _selectedChannel = null;
+                        });
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // 2. Center Column (Expanded)
+        Expanded(
+          child: Container(
+            color: Colors.black.withValues(alpha: 0.1),
+            child: Column(
+              children: [
+                // Player slot — placeholder. The real PlayerWidget floats above.
+                AspectRatio(
+                  aspectRatio: 16 / 9,
+                  child: Container(
+                    decoration: const BoxDecoration(color: Colors.black),
+                  ),
+                ),
+
+                // Search + Channel List
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Column(
+                      children: [
+                        TextField(
+                          controller: _searchController,
+                          decoration: InputDecoration(
+                            hintText: 'Search channels...',
+                            prefixIcon: const Icon(Icons.search_rounded),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide.none,
+                            ),
+                            filled: true,
+                            fillColor: theme.colorScheme.surface,
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Expanded(
+                          child: ListView.builder(
+                            itemCount: filteredChannels.length,
+                            itemBuilder: (context, index) {
+                              final channel = filteredChannels[index];
+                              final isSelected = _selectedChannel?.id == channel.id;
+                              final isFavorited = favoritesController.favorites.any(
+                                (f) => f.streamId == channel.id && f.contentType == channel.contentType,
+                              );
+
+                              return Container(
+                                height: 64,
+                                margin: const EdgeInsets.only(bottom: 4),
+                                decoration: BoxDecoration(
+                                  color: isSelected
+                                      ? theme.colorScheme.primary.withValues(alpha: 0.15)
+                                      : Colors.transparent,
+                                  border: isSelected
+                                      ? Border(left: BorderSide(color: theme.colorScheme.primary, width: 3))
+                                      : null,
+                                ),
+                                child: InkWell(
+                                  onTap: () => setState(() => _selectedChannel = channel),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          width: 48,
+                                          height: 48,
+                                          decoration: BoxDecoration(
+                                            borderRadius: BorderRadius.circular(8),
+                                            color: theme.colorScheme.surface,
+                                          ),
+                                          clipBehavior: Clip.antiAlias,
+                                          child: channel.imageUrl.isNotEmpty
+                                              ? Image.network(channel.imageUrl, fit: BoxFit.contain)
+                                              : const Icon(Icons.live_tv_rounded, size: 24, color: Colors.white24),
+                                        ),
+                                        const SizedBox(width: 16),
+                                        Expanded(
+                                          child: Text(
+                                            channel.name,
+                                            style: theme.textTheme.bodyLarge?.copyWith(
+                                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                              color: isSelected ? Colors.white : theme.textTheme.bodyLarge?.color,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                        IconButton(
+                                          icon: Icon(
+                                            isFavorited ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                                            color: isFavorited ? Colors.redAccent : theme.hintColor,
+                                            size: 20,
+                                          ),
+                                          onPressed: () => favoritesController.toggleFavorite(channel),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        // 3. Info Panel (Right, 320px)
+        Container(
+          width: 320,
+          decoration: BoxDecoration(
+            border: Border(left: BorderSide(color: theme.dividerColor.withValues(alpha: 0.1), width: 1)),
+          ),
+          child: _selectedChannel == null
+              ? Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.tv_off_rounded, size: 48, color: theme.hintColor.withValues(alpha: 0.2)),
+                      const SizedBox(height: 16),
+                      Text('No channel selected', style: theme.textTheme.bodySmall?.copyWith(color: theme.hintColor)),
+                    ],
+                  ),
+                )
+              : SingleChildScrollView(
+                  padding: const EdgeInsets.all(32),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Center(
+                        child: Container(
+                          width: 120,
+                          height: 120,
+                          decoration: BoxDecoration(
+                            color: Colors.black,
+                            borderRadius: BorderRadius.circular(20),
+                            boxShadow: [
+                              BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 20),
+                            ],
+                          ),
+                          clipBehavior: Clip.antiAlias,
+                          child: _selectedChannel!.imageUrl.isNotEmpty
+                              ? Image.network(_selectedChannel!.imageUrl, fit: BoxFit.contain)
+                              : const Icon(Icons.live_tv_rounded, size: 64, color: Colors.white10),
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              _selectedChannel!.name,
+                              style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.redAccent,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Text(
+                              'LIVE',
+                              style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 32),
+                      const Divider(),
+                      const SizedBox(height: 32),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: () => navigateByContentType(context, _selectedChannel!),
+                          icon: const Icon(Icons.play_arrow_rounded),
+                          label: const Text('Watch Now'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: theme.colorScheme.primary,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 20),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: () => favoritesController.toggleFavorite(_selectedChannel!),
+                          icon: Icon(
+                            favoritesController.favorites.any((f) => f.streamId == _selectedChannel!.id)
+                                ? Icons.favorite_rounded
+                                : Icons.favorite_border_rounded,
+                            size: 18,
+                          ),
+                          label: Text(
+                            favoritesController.favorites.any((f) => f.streamId == _selectedChannel!.id)
+                                ? 'Remove from Favorites'
+                                : 'Add to Favorites',
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: favoritesController.favorites.any((f) => f.streamId == _selectedChannel!.id)
+                                ? Colors.redAccent
+                                : Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 20),
+                            side: BorderSide(
+                              color: favoritesController.favorites.any((f) => f.streamId == _selectedChannel!.id)
+                                  ? Colors.redAccent.withValues(alpha: 0.5)
+                                  : theme.dividerColor,
+                            ),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 48),
+                      // EPG Section
+                      Text(
+                        'NEXT PROGRAM',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          letterSpacing: 1.1,
+                          fontWeight: FontWeight.bold,
+                          color: theme.hintColor,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text('No program info available.', style: theme.textTheme.bodyMedium?.copyWith(color: theme.hintColor)),
+                    ],
+                  ),
+                ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
@@ -118,82 +408,46 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen> with AutomaticKeepA
     return ValueListenableBuilder<bool>(
       valueListenable: fullscreenNotifier,
       builder: (context, isFullscreen, _) {
-        if (isFullscreen) {
-          return ColoredBox(
-            color: Colors.black,
-            child: _selectedChannel == null
-                ? _buildIdlePlaceholder()
-                : PlayerWidget(
-                    key: ValueKey(_selectedChannel!.id),
-                    contentItem: _selectedChannel!,
-                    showControls: true,
-                    showInfo: false,
-                    onFullscreen: _toggleFullscreen,
-                    queue: _currentCategoryChannels,
-                    isInline: true,
-                  ),
-          );
-        }
-
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+        return Stack(
           children: [
-            // 1. Categories Sidebar (Left, 200px)
-            Container(
-              width: 200,
-              decoration: BoxDecoration(
-                border: Border(right: BorderSide(color: theme.dividerColor.withValues(alpha: 0.1), width: 1)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(20.0),
-                    child: Text(
-                      context.loc.live_streams.toUpperCase(),
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        letterSpacing: 1.2,
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.primary,
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount: categories.length,
-                      itemBuilder: (context, index) {
-                        final isSelected = _selectedCategoryIndex == index;
-                        return _CategoryTile(
-                          title: categories[index].category.categoryName,
-                          isSelected: isSelected,
-                          onTap: () {
-                            setState(() {
-                              _selectedCategoryIndex = index;
-                              _selectedChannel = null;
-                            });
-                          },
-                        );
-                      },
-                    ),
-                  ),
-                ],
+            // ── Layer 0: background layout (never contains PlayerWidget) ──
+            Positioned.fill(
+              child: Offstage(
+                offstage: isFullscreen,
+                child: _buildLayoutWithoutPlayer(
+                  theme,
+                  controller,
+                  favoritesController,
+                  categories,
+                  filteredChannels,
+                ),
               ),
             ),
 
-            // 2. Center Column (Expanded)
-            Expanded(
-              child: Container(
-                color: Colors.black.withValues(alpha: 0.1),
-                child: Column(
-                  children: [
-                    // Player slot — always in the tree, never removed.
-                    // ValueKey on channel id: only rebuilds when channel changes.
-                    // fullscreenNotifier hides the shell so this fills the window.
-                    AspectRatio(
-                      aspectRatio: 16 / 9,
-                      child: Container(
-                        decoration: const BoxDecoration(color: Colors.black),
-                        clipBehavior: Clip.antiAlias,
+            // ── Layer 1: fullscreen black overlay behind layout, above bg ──
+            if (isFullscreen)
+              const Positioned.fill(
+                child: IgnorePointer(
+                  child: ColoredBox(color: Colors.black),
+                ),
+              ),
+
+            // ── Layer 2: PlayerWidget in a stable tree position ──
+            Positioned.fill(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final double left = isFullscreen ? 0 : 200.0;
+                  final double right = isFullscreen ? 0 : 320.0;
+                  final double width = constraints.maxWidth - left - right;
+                  final double height = isFullscreen ? constraints.maxHeight : width * 9.0 / 16.0;
+
+                  return Stack(
+                    children: [
+                      Positioned(
+                        left: left,
+                        top: 0,
+                        width: width,
+                        height: height,
                         child: _selectedChannel == null
                             ? _buildIdlePlaceholder()
                             : PlayerWidget(
@@ -206,230 +460,10 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen> with AutomaticKeepA
                                 isInline: true,
                               ),
                       ),
-                    ),
-
-                    // Search + Channel List
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        child: Column(
-                          children: [
-                            TextField(
-                              controller: _searchController,
-                              decoration: InputDecoration(
-                                hintText: 'Search channels...',
-                                prefixIcon: const Icon(Icons.search_rounded),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide.none,
-                                ),
-                                filled: true,
-                                fillColor: theme.colorScheme.surface,
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            Expanded(
-                              child: ListView.builder(
-                                itemCount: filteredChannels.length,
-                                itemBuilder: (context, index) {
-                                  final channel = filteredChannels[index];
-                                  final isSelected = _selectedChannel?.id == channel.id;
-                                  final isFavorited = favoritesController.favorites.any(
-                                    (f) => f.streamId == channel.id && f.contentType == channel.contentType,
-                                  );
-
-                                  return Container(
-                                    height: 64,
-                                    margin: const EdgeInsets.only(bottom: 4),
-                                    decoration: BoxDecoration(
-                                      color: isSelected
-                                          ? theme.colorScheme.primary.withValues(alpha: 0.15)
-                                          : Colors.transparent,
-                                      border: isSelected
-                                          ? Border(left: BorderSide(color: theme.colorScheme.primary, width: 3))
-                                          : null,
-                                    ),
-                                    child: InkWell(
-                                      onTap: () => setState(() => _selectedChannel = channel),
-                                      child: Padding(
-                                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                                        child: Row(
-                                          children: [
-                                            Container(
-                                              width: 48,
-                                              height: 48,
-                                              decoration: BoxDecoration(
-                                                borderRadius: BorderRadius.circular(8),
-                                                color: theme.colorScheme.surface,
-                                              ),
-                                              clipBehavior: Clip.antiAlias,
-                                              child: channel.imageUrl.isNotEmpty
-                                                  ? Image.network(channel.imageUrl, fit: BoxFit.contain)
-                                                  : const Icon(Icons.live_tv_rounded, size: 24, color: Colors.white24),
-                                            ),
-                                            const SizedBox(width: 16),
-                                            Expanded(
-                                              child: Text(
-                                                channel.name,
-                                                style: theme.textTheme.bodyLarge?.copyWith(
-                                                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                                  color: isSelected ? Colors.white : theme.textTheme.bodyLarge?.color,
-                                                ),
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ),
-                                            IconButton(
-                                              icon: Icon(
-                                                isFavorited ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-                                                color: isFavorited ? Colors.redAccent : theme.hintColor,
-                                                size: 20,
-                                              ),
-                                              onPressed: () => favoritesController.toggleFavorite(channel),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                    ],
+                  );
+                },
               ),
-            ),
-
-            // 3. Info Panel (Right, 320px)
-            Container(
-              width: 320,
-              decoration: BoxDecoration(
-                border: Border(left: BorderSide(color: theme.dividerColor.withValues(alpha: 0.1), width: 1)),
-              ),
-              child: _selectedChannel == null
-                  ? Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.tv_off_rounded, size: 48, color: theme.hintColor.withValues(alpha: 0.2)),
-                          const SizedBox(height: 16),
-                          Text('No channel selected', style: theme.textTheme.bodySmall?.copyWith(color: theme.hintColor)),
-                        ],
-                      ),
-                    )
-                  : SingleChildScrollView(
-                      padding: const EdgeInsets.all(32),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Center(
-                            child: Container(
-                              width: 120,
-                              height: 120,
-                              decoration: BoxDecoration(
-                                color: Colors.black,
-                                borderRadius: BorderRadius.circular(20),
-                                boxShadow: [
-                                  BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 20),
-                                ],
-                              ),
-                              clipBehavior: Clip.antiAlias,
-                              child: _selectedChannel!.imageUrl.isNotEmpty
-                                  ? Image.network(_selectedChannel!.imageUrl, fit: BoxFit.contain)
-                                  : const Icon(Icons.live_tv_rounded, size: 64, color: Colors.white10),
-                            ),
-                          ),
-                          const SizedBox(height: 32),
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  _selectedChannel!.name,
-                                  style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: Colors.redAccent,
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: const Text(
-                                  'LIVE',
-                                  style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 32),
-                          const Divider(),
-                          const SizedBox(height: 32),
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton.icon(
-                              onPressed: () => navigateByContentType(context, _selectedChannel!),
-                              icon: const Icon(Icons.play_arrow_rounded),
-                              label: const Text('Watch Now'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: theme.colorScheme.primary,
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 20),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          SizedBox(
-                            width: double.infinity,
-                            child: OutlinedButton.icon(
-                              onPressed: () => favoritesController.toggleFavorite(_selectedChannel!),
-                              icon: Icon(
-                                favoritesController.favorites.any((f) => f.streamId == _selectedChannel!.id)
-                                    ? Icons.favorite_rounded
-                                    : Icons.favorite_border_rounded,
-                                size: 18,
-                              ),
-                              label: Text(
-                                favoritesController.favorites.any((f) => f.streamId == _selectedChannel!.id)
-                                    ? 'Remove from Favorites'
-                                    : 'Add to Favorites',
-                              ),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: favoritesController.favorites.any((f) => f.streamId == _selectedChannel!.id)
-                                    ? Colors.redAccent
-                                    : Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 20),
-                                side: BorderSide(
-                                  color: favoritesController.favorites.any((f) => f.streamId == _selectedChannel!.id)
-                                      ? Colors.redAccent.withValues(alpha: 0.5)
-                                      : theme.dividerColor,
-                                ),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 48),
-                          // EPG Section
-                          Text(
-                            'NEXT PROGRAM',
-                            style: theme.textTheme.labelSmall?.copyWith(
-                              letterSpacing: 1.1,
-                              fontWeight: FontWeight.bold,
-                              color: theme.hintColor,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          Text('No program info available.', style: theme.textTheme.bodyMedium?.copyWith(color: theme.hintColor)),
-                        ],
-                      ),
-                    ),
             ),
           ],
         );
