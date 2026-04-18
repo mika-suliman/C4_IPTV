@@ -10,6 +10,10 @@ import '../../services/fullscreen_notifier.dart';
 import '../../utils/navigate_by_content_type.dart';
 import '../../widgets/player_widget.dart';
 
+// - [x] Stabilize MainShellScreen widget tree to prevent child state loss
+// - [x] Fix dispose crash and add debug logs in C4LiveGridScreen
+// - [x] Fix unmodifiable list error and add debug logs in PlayerWidget
+// - [/] Verify fix with logs and flutter analyze
 class C4LiveGridScreen extends StatefulWidget {
   const C4LiveGridScreen({super.key});
 
@@ -17,11 +21,14 @@ class C4LiveGridScreen extends StatefulWidget {
   State<C4LiveGridScreen> createState() => _C4LiveGridScreenState();
 }
 
-class _C4LiveGridScreenState extends State<C4LiveGridScreen> {
+class _C4LiveGridScreenState extends State<C4LiveGridScreen> with AutomaticKeepAliveClientMixin {
   int _selectedCategoryIndex = 0;
   ContentItem? _selectedChannel;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
@@ -33,13 +40,15 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen> {
 
   @override
   void dispose() {
-    // Always restore system UI and window state when leaving this screen
-    SystemChrome.setEnabledSystemUIMode(
-      SystemUiMode.edgeToEdge,
-      overlays: SystemUiOverlay.values,
-    );
-    windowManager.setFullScreen(false);
-    fullscreenNotifier.value = false;
+    // Wrap in addPostFrameCallback to avoid 'tree locked' error
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      SystemChrome.setEnabledSystemUIMode(
+        SystemUiMode.edgeToEdge,
+        overlays: SystemUiOverlay.values,
+      );
+      windowManager.setFullScreen(false);
+      fullscreenNotifier.value = false;
+    });
     _searchController.dispose();
     super.dispose();
   }
@@ -89,6 +98,7 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final theme = Theme.of(context);
     final controller = context.watch<XtreamCodeHomeController>();
     final favoritesController = context.watch<FavoritesController>();

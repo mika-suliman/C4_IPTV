@@ -383,10 +383,11 @@ class _PlayerWidgetState extends State<PlayerWidget>
     });
 
     _player.stream.position.listen((position) {
-      _player.state.playlist.medias[currentItemIndex] = Media(
-        contentItem.url,
-        start: position,
-      );
+      // DEBUG: Remove mutation of unmodifiable list
+      // _player.state.playlist.medias[currentItemIndex] = Media(
+      //   contentItem.url,
+      //   start: position,
+      // );
 
       // Debounce: Save watch history every 5 seconds instead of on every position update
       _pendingWatchDuration = position;
