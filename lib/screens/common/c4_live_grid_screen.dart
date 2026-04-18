@@ -6,6 +6,7 @@ import '../../controllers/xtream_code_home_controller.dart';
 import '../../controllers/favorites_controller.dart';
 import '../../l10n/localization_extension.dart';
 import '../../models/playlist_content_model.dart';
+import '../../services/fullscreen_notifier.dart';
 import '../../utils/navigate_by_content_type.dart';
 import '../../widgets/player_widget.dart';
 
@@ -40,6 +41,7 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen> {
         overlays: SystemUiOverlay.values,
       );
       windowManager.setFullScreen(false);
+      fullscreenNotifier.value = false;
     }
     _searchController.dispose();
     super.dispose();
@@ -52,6 +54,7 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen> {
       overlays: [],
     );
     windowManager.setFullScreen(true);
+    fullscreenNotifier.value = true;   // ← hides rail + header
     setState(() => _isFullscreen = true);
   }
 
@@ -61,6 +64,7 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen> {
       overlays: SystemUiOverlay.values,
     );
     windowManager.setFullScreen(false);
+    fullscreenNotifier.value = false;  // ← restores rail + header
     setState(() => _isFullscreen = false);
   }
 
