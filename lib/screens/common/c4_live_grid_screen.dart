@@ -19,7 +19,6 @@ class C4LiveGridScreen extends StatefulWidget {
 class _C4LiveGridScreenState extends State<C4LiveGridScreen> {
   int _selectedCategoryIndex = 0;
   ContentItem? _selectedChannel;
-  final GlobalKey _playerKey = GlobalKey();
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   bool _isFullscreen = false;
@@ -178,7 +177,7 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen> {
                               : _isFullscreen 
                                   ? const SizedBox.shrink()
                                   : PlayerWidget(
-                                      key: _playerKey,
+                                      key: ValueKey(_selectedChannel!.id),
                                       contentItem: _selectedChannel!,
                                       showControls: true,
                                       showInfo: false,
@@ -442,7 +441,7 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen> {
                 color: Colors.black,
                 child: _isFullscreen
                     ? PlayerWidget(
-                        key: _playerKey,
+                        key: ValueKey('fs_${_selectedChannel!.id}'),
                         contentItem: _selectedChannel!,
                         showControls: true,
                         showInfo: false,
