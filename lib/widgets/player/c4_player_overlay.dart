@@ -3,12 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
-import 'package:window_manager/window_manager.dart';
-import 'dart:io';
 import '../../controllers/xtream_code_home_controller.dart';
 import '../../services/player_state.dart' as app_player_state;
 import '../../models/content_type.dart';
 import '../../models/category_view_model.dart';
+import '../../services/fullscreen_notifier.dart';
 import '../../utils/get_playlist_type.dart';
 
 class C4PlayerOverlay extends StatefulWidget {
@@ -39,10 +38,6 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
   bool _showSidePanel = false;
   bool _showInfoPanel = false;
   _SidePanelMode _sidePanelMode = _SidePanelMode.channels;
-  
-  // Fullscreen state
-  bool _isFullscreen = false;
-  bool _isTogglingFullscreen = false;
   
   // Stream metadata state
   int? _resW;
@@ -92,13 +87,6 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
         }
       }),
     ];
-    
-    // Initial check for fullscreen
-    if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
-      windowManager.isFullScreen().then((value) {
-        if (mounted) setState(() => _isFullscreen = value);
-      });
-    }
   }
 
   @override
@@ -167,25 +155,9 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
   }
 
   Future<void> _toggleFullscreen() async {
-    // If an override is provided (e.g. inline Live TV player),
-    // delegate to the caller instead of toggling OS fullscreen.
-    if (widget.onFullscreenOverride != null) {
-      widget.onFullscreenOverride!();
-      return;
-    }
-
-    if (_isTogglingFullscreen) return;
-
-    if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
-      _isTogglingFullscreen = true;
-      try {
-        final isFull = await windowManager.isFullScreen();
-        await windowManager.setFullScreen(!isFull);
-        if (mounted) setState(() => _isFullscreen = !isFull);
-      } finally {
-        _isTogglingFullscreen = false;
-      }
-    }
+    // We delegate exclusively to the override now, which manages
+    // the global fullscreenNotifier.
+    widget.onFullscreenOverride?.call();
   }
 
   void _openSubtitleSelector() {
@@ -199,7 +171,7 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
         decoration: BoxDecoration(
-          color: theme.scaffoldBackgroundColor.withOpacity(0.95),
+          color: theme.scaffoldBackgroundColor.withValues(alpha: 0.95),
           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: Column(
@@ -273,44 +245,49 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
     final isLive = _duration.inSeconds == 0;
     final videoTrack = widget.player.state.track.video;
 
-    return KeyboardListener(
-      focusNode: FocusNode()..requestFocus(),
-      onKeyEvent: _onKey,
-      child: GestureDetector(
-        onTap: _toggleVisibility,
-        behavior: HitTestBehavior.translucent,
-        child: Stack(
-          children: [
-            // Overlay Content
-            AnimatedOpacity(
-              opacity: _isVisible ? 1.0 : 0.0,
-              duration: const Duration(milliseconds: 300),
-              child: IgnorePointer(
-                ignoring: !_isVisible,
-                child: Stack(
-                  children: [
-                    // Top Bar
-                    _buildTopBar(theme),
+    return ValueListenableBuilder<bool>(
+      valueListenable: fullscreenNotifier,
+      builder: (context, isFullscreen, _) {
+        return KeyboardListener(
+          focusNode: FocusNode()..requestFocus(),
+          onKeyEvent: _onKey,
+          child: GestureDetector(
+            onTap: _toggleVisibility,
+            behavior: HitTestBehavior.translucent,
+            child: Stack(
+              children: [
+                // Overlay Content
+                AnimatedOpacity(
+                  opacity: _isVisible ? 1.0 : 0.0,
+                  duration: const Duration(milliseconds: 300),
+                  child: IgnorePointer(
+                    ignoring: !_isVisible,
+                    child: Stack(
+                      children: [
+                        // Top Bar
+                        _buildTopBar(theme, isFullscreen),
 
-                    // Bottom Bar
-                    _buildBottomBar(theme, isLive),
+                        // Bottom Bar
+                        _buildBottomBar(theme, isLive),
 
-                    // Info Panel (Metadata overlay)
-                    if (_showInfoPanel) _buildInfoPanel(theme, videoTrack),
-                  ],
+                        // Info Panel (Metadata overlay)
+                        if (_showInfoPanel) _buildInfoPanel(theme, videoTrack),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
-            ),
 
-            // Side Panel (Always accessible if visible, or can trigger visibility)
-            if (_showSidePanel) _buildSidePanel(theme),
-          ],
-        ),
-      ),
+                // Side Panel (Always accessible if visible, or can trigger visibility)
+                if (_showSidePanel) _buildSidePanel(theme),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
-  Widget _buildTopBar(ThemeData theme) {
+  Widget _buildTopBar(ThemeData theme, bool isFullscreen) {
     return Positioned(
       top: 0, left: 0, right: 0,
       child: LayoutBuilder(
@@ -420,7 +397,7 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                   icon: Icon(
-                    _isFullscreen
+                    isFullscreen
                         ? Icons.fullscreen_exit_rounded
                         : Icons.fullscreen_rounded,
                     color: Colors.white,
@@ -587,7 +564,7 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
         width: 300,
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: Colors.black.withOpacity(0.8),
+          color: Colors.black.withValues(alpha: 0.8),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: Colors.white10),
         ),
@@ -625,7 +602,7 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
       width: 350,
       child: Container(
         decoration: BoxDecoration(
-          color: theme.scaffoldBackgroundColor.withOpacity(0.95),
+          color: theme.scaffoldBackgroundColor.withValues(alpha: 0.95),
           boxShadow: const [BoxShadow(color: Colors.black54, blurRadius: 20)],
         ),
         child: Column(
@@ -802,12 +779,23 @@ class _InfoRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.only(bottom: 12),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(color: Colors.white54, fontSize: 13)),
-          Text(value, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+          SizedBox(
+            width: 80,
+            child: Text(
+              label,
+              style: const TextStyle(color: Colors.white54, fontSize: 13),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500),
+            ),
+          ),
         ],
       ),
     );
@@ -817,52 +805,39 @@ class _InfoRow extends StatelessWidget {
 class _PlayerControlBtn extends StatelessWidget {
   final IconData icon;
   final VoidCallback onPressed;
-  final bool isLarge;
   final double size;
   final double iconSize;
+  final bool isLarge;
 
   const _PlayerControlBtn({
     required this.icon,
     required this.onPressed,
-    this.isLarge = false,
     this.size = 48,
     this.iconSize = 24,
+    this.isLarge = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Focus(
-      child: Builder(
-        builder: (context) {
-          final focused = Focus.of(context).hasFocus;
-          return GestureDetector(
-            onTap: onPressed,
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              width: size,
-              height: size,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: focused ? theme.colorScheme.primary : Colors.white10,
-                boxShadow: focused
-                    ? [
-                        BoxShadow(
-                          color: theme.colorScheme.primary.withValues(alpha: 0.5),
-                          blurRadius: 15,
-                          spreadRadius: 1,
-                        )
-                      ]
-                    : [],
-              ),
-              child: Icon(
-                icon,
-                color: focused ? Colors.white : Colors.white70,
-                size: iconSize,
-              ),
-            ),
-          );
-        },
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(size / 2),
+        child: Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: isLarge ? theme.colorScheme.primary : Colors.white10,
+          ),
+          child: Icon(
+            icon,
+            color: Colors.white,
+            size: iconSize,
+          ),
+        ),
       ),
     );
   }
