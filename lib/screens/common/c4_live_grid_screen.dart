@@ -382,15 +382,6 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen> with AutomaticKeepA
       builder: (context, isFullscreen, _) {
         return LayoutBuilder(
           builder: (context, outerConstraints) {
-            final totalW = outerConstraints.maxWidth;
-            final totalH = outerConstraints.maxHeight;
-
-            // Player slot geometry
-            final double pLeft = isFullscreen ? 0 : 200;
-            final double pTop = 0;
-            final double pWidth = isFullscreen ? totalW : (totalW - 200 - 320).clamp(0, double.infinity);
-            final double pHeight = isFullscreen ? totalH : pWidth * 9.0 / 16.0;
-
             return Stack(
               children: [
                 // Layer 0: background layout panels (no PlayerWidget)
@@ -440,20 +431,17 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen> with AutomaticKeepA
                   ),
                 ],
 
-                // Layer 1: black fullscreen overlay
-                if (isFullscreen)
-                  const Positioned.fill(
-                    child: IgnorePointer(
-                      child: ColoredBox(color: Colors.black),
-                    ),
-                  ),
-
-                // Layer 2: PlayerWidget — parent is ALWAYS Positioned
+                // Layer 1: PlayerWidget — parent is ALWAYS Positioned
+                // We use left/right/bottom instead of width/height so Flutter stretches the render box.
+                // This prevents media_kit_video from detecting a constraints change that restarts the stream.
                 Positioned(
-                  left: pLeft,
-                  top: pTop,
-                  width: pWidth,
-                  height: pHeight,
+                  left: isFullscreen ? 0 : 200,
+                  top: 0,
+                  right: isFullscreen ? 0 : 320,
+                  bottom: isFullscreen ? 0 : null,
+                  height: isFullscreen
+                      ? null
+                      : (outerConstraints.maxWidth - 520).clamp(0.0, double.infinity) * 9.0 / 16.0,
                   child: _selectedChannel == null
                       ? _buildIdlePlaceholder()
                       : PlayerWidget(
