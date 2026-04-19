@@ -68,7 +68,7 @@ class MyApp extends StatelessWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      title: 'Another IPTV Player',
+      title: 'C4_IPTV',
       // Use the named theme system — supports Light, Dark, and Sky Blue
       theme: themeProvider.currentThemeData,
       darkTheme: themeProvider.isDark ? themeProvider.currentThemeData : null,
