@@ -440,9 +440,7 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen>
     if (_selectedChannel == null && filteredChannels.isNotEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted && _selectedChannel == null) {
-          setState(() {
-            _selectedChannel = filteredChannels.first;
-          });
+          setState(() => _selectedChannel = filteredChannels.first);
         }
       });
     }
@@ -451,126 +449,120 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen>
       valueListenable: fullscreenNotifier,
       builder: (context, isFullscreen, _) {
         return LayoutBuilder(
-          builder: (context, outerConstraints) {
-            final totalW = outerConstraints.maxWidth;
-            final playerAvailableWidth =
-                (totalW - _sidebarWidth - _channelPanelWidth).clamp(0.0, double.infinity);
-            final playerHeight = playerAvailableWidth * 9.0 / 16.0;
+          builder: (context, constraints) {
+            final totalW = constraints.maxWidth;
+            final playerW = (totalW - _sidebarWidth - _channelPanelWidth)
+                .clamp(0.0, double.infinity);
+            final playerH = playerW * 9.0 / 16.0;
 
-            return Stack(
-              children: [
-                // Layer 0: background layout panels (no PlayerWidget)
-                if (!isFullscreen) ...[
-                  // 1. Categories Sidebar (Left, resizable)
-                  Positioned(
-                    left: 0,
-                    top: 0,
-                    bottom: 0,
-                    width: _sidebarWidth,
-                    child: _buildCategorySidebar(
-                        theme, controller, categories),
-                  ),
+            return Scaffold(
+              backgroundColor: Colors.black,
+              body: Stack(
+                children: [
+                  // ── LEFT: Categories sidebar ──────────────────────
+                  if (!isFullscreen)
+                    Positioned(
+                      left: 0,
+                      top: 0,
+                      bottom: 0,
+                      width: _sidebarWidth,
+                      child: _buildCategorySidebar(
+                          theme, controller, categories),
+                    ),
 
-                  // 2. Center Column: ONLY the player placeholder (16:9)
+                  // ── CENTER: 16:9 placeholder background ───────────
+                  if (!isFullscreen)
+                    Positioned(
+                      left: _sidebarWidth,
+                      right: _channelPanelWidth,
+                      top: 0,
+                      bottom: 0,
+                      child: const ColoredBox(color: Colors.black),
+                    ),
+
+                  // ── RIGHT: Channel list ───────────────────────────
+                  if (!isFullscreen)
+                    Positioned(
+                      right: 0,
+                      top: 0,
+                      bottom: 0,
+                      width: _channelPanelWidth,
+                      child: _buildSearchAndChannelList(
+                        theme,
+                        favoritesController,
+                        filteredChannels,
+                      ),
+                    ),
+
+                  // ── SPLITTER: sidebar ←→ player ───────────────────
+                  if (!isFullscreen)
+                    Positioned(
+                      left: _sidebarWidth - 4,
+                      top: 0,
+                      bottom: 0,
+                      width: 8,
+                      child: MouseRegion(
+                        cursor: SystemMouseCursors.resizeColumn,
+                        child: GestureDetector(
+                          behavior: HitTestBehavior.translucent,
+                          onHorizontalDragUpdate: (d) {
+                            setState(() {
+                              _sidebarWidth =
+                                  (_sidebarWidth + d.delta.dx)
+                                      .clamp(_minSidebarWidth,
+                                          _maxSidebarWidth);
+                            });
+                          },
+                        ),
+                      ),
+                    ),
+
+                  // ── SPLITTER: player ←→ channel list ─────────────
+                  if (!isFullscreen)
+                    Positioned(
+                      right: _channelPanelWidth - 4,
+                      top: 0,
+                      bottom: 0,
+                      width: 8,
+                      child: MouseRegion(
+                        cursor: SystemMouseCursors.resizeColumn,
+                        child: GestureDetector(
+                          behavior: HitTestBehavior.translucent,
+                          onHorizontalDragUpdate: (d) {
+                            setState(() {
+                              _channelPanelWidth =
+                                  (_channelPanelWidth - d.delta.dx)
+                                      .clamp(_minChannelPanelWidth,
+                                          _maxChannelPanelWidth);
+                            });
+                          },
+                        ),
+                      ),
+                    ),
+
+                  // ── PLAYER (always present, never recreated) ──────
+                  // Uses left/right so bounds change without changing
+                  // the widget's key — stream never restarts.
                   Positioned(
-                    left: _sidebarWidth,
-                    right: _channelPanelWidth,
+                    left: isFullscreen ? 0 : _sidebarWidth,
                     top: 0,
-                    bottom: 0,
-                    child: Container(
-                      color: Colors.black.withValues(alpha: 0.1),
-                      child: Column(
-                        children: [
-                          Align(
-                            alignment: Alignment.topCenter,
-                            child: AspectRatio(
-                              aspectRatio: 16 / 9,
-                              child: const ColoredBox(color: Colors.black),
-                            ),
+                    right: isFullscreen ? 0 : _channelPanelWidth,
+                    bottom: isFullscreen ? 0 : null,
+                    height: isFullscreen ? null : playerH,
+                    child: _selectedChannel == null
+                        ? _buildIdlePlaceholder()
+                        : PlayerWidget(
+                            key: ValueKey(_selectedChannel!.id),
+                            contentItem: _selectedChannel!,
+                            showControls: true,
+                            showInfo: false,
+                            onFullscreen: _toggleFullscreen,
+                            queue: _currentCategoryChannels,
+                            isInline: true,
                           ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  // Splitter for resizing channel list panel
-                  Positioned(
-                    right: _channelPanelWidth - 4,
-                    top: 0,
-                    bottom: 0,
-                    width: 8,
-                    child: MouseRegion(
-                      cursor: SystemMouseCursors.resizeColumn,
-                      child: GestureDetector(
-                        behavior: HitTestBehavior.translucent,
-                        onHorizontalDragUpdate: (details) {
-                          setState(() {
-                            _channelPanelWidth =
-                                (_channelPanelWidth - details.delta.dx)
-                                    .clamp(
-                                      _minChannelPanelWidth,
-                                      _maxChannelPanelWidth,
-                                    );
-                          });
-                        },
-                      ),
-                    ),
-                  ),
-
-                  // 3. Right Panel: channel list
-                  Positioned(
-                    right: 0,
-                    top: 0,
-                    bottom: 0,
-                    width: _channelPanelWidth,
-                    child: _buildSearchAndChannelList(
-                      theme,
-                      favoritesController,
-                      filteredChannels,
-                    ),
-                  ),
-
-                  // Splitter for resizing sidebar
-                  Positioned(
-                    left: _sidebarWidth - 4,
-                    top: 0,
-                    bottom: 0,
-                    width: 8,
-                    child: MouseRegion(
-                      cursor: SystemMouseCursors.resizeColumn,
-                      child: GestureDetector(
-                        behavior: HitTestBehavior.translucent,
-                        onHorizontalDragUpdate: (details) {
-                          setState(() {
-                            _sidebarWidth = (_sidebarWidth + details.delta.dx)
-                                .clamp(_minSidebarWidth, _maxSidebarWidth);
-                          });
-                        },
-                      ),
-                    ),
                   ),
                 ],
-
-                // Layer 1: PlayerWidget — parent is ALWAYS Positioned
-                Positioned(
-                  left: isFullscreen ? 0 : _sidebarWidth,
-                  top: 0,
-                  right: isFullscreen ? 0 : _channelPanelWidth,
-                  bottom: isFullscreen ? 0 : null,
-                  height: isFullscreen ? null : playerHeight,
-                  child: _selectedChannel == null
-                      ? _buildIdlePlaceholder()
-                      : PlayerWidget(
-                          key: ValueKey(_selectedChannel!.id),
-                          contentItem: _selectedChannel!,
-                          showControls: true,
-                          showInfo: false,
-                          onFullscreen: _toggleFullscreen,
-                          queue: _currentCategoryChannels,
-                          isInline: true,
-                        ),
-                ),
-              ],
+              ),
             );
           },
         );
