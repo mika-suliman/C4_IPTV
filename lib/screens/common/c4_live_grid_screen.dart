@@ -492,6 +492,7 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen>
                         onFullscreen: _toggleFullscreen,
                         queue: _currentCategoryChannels,
                         isInline: true,
+                        showPersistentSidebar: true,
                       ),
               ),
             ],

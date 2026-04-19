@@ -18,6 +18,8 @@ import '../../services/player_state.dart';
 import '../../services/service_locator.dart';
 import '../../utils/audio_handler.dart';
 import '../utils/player_error_handler.dart';
+import '../services/fullscreen_notifier.dart';
+import '../utils/responsive_helper.dart';
 
 class PlayerWidget extends StatefulWidget {
   final ContentItem contentItem;
@@ -27,6 +29,7 @@ class PlayerWidget extends StatefulWidget {
   final VoidCallback? onFullscreen;
   final List<ContentItem>? queue;
   final bool isInline;
+  final bool showPersistentSidebar;
 
   const PlayerWidget({
     super.key,
@@ -37,6 +40,7 @@ class PlayerWidget extends StatefulWidget {
     this.onFullscreen,
     this.queue,
     this.isInline = false,
+    this.showPersistentSidebar = false,
   });
 
   @override
@@ -927,34 +931,193 @@ class _PlayerWidgetState extends State<PlayerWidget>
       );
     }
 
-    return GestureDetector(
+    final isLiveStream =
+        widget.contentItem.contentType == ContentType.liveStream;
+    final isDesktop = ResponsiveHelper.isDesktopOrTV(context);
+    final usePersistentSidebar =
+        widget.showPersistentSidebar && isLiveStream && isDesktop;
+
+    final Widget videoStack = Stack(
+      children: [
+        getVideo(
+          context,
+          _videoController!,
+          PlayerState.subtitleConfiguration,
+          onFullscreenOverride: widget.onFullscreen,
+          isInline: widget.isInline,
+        ),
+        if (!usePersistentSidebar &&
+            _showChannelList &&
+            _queue != null &&
+            _queue!.length > 1)
+          _buildChannelListOverlay(context),
+      ],
+    );
+
+    final Widget playerCore = GestureDetector(
       onVerticalDragEnd: (details) {
         if (_queue == null || _queue!.length <= 1) return;
-
-        // Yukarı swipe - sonraki kanal
         if (details.primaryVelocity != null &&
             details.primaryVelocity! < -500) {
           _changeChannel(1);
-        }
-        // Aşağı swipe - önceki kanal
-        else if (details.primaryVelocity != null &&
+        } else if (details.primaryVelocity != null &&
             details.primaryVelocity! > 500) {
           _changeChannel(-1);
         }
       },
-      child: Stack(
-        children: [
-          getVideo(
-            context,
-            _videoController!,
-            PlayerState.subtitleConfiguration,
-            onFullscreenOverride: widget.onFullscreen,
-            isInline: widget.isInline,
-          ),
+      child: videoStack,
+    );
 
-          // Kanal listesi overlay - normal mod için
-          if (_showChannelList && _queue != null && _queue!.length > 1)
-            _buildChannelListOverlay(context),
+    if (usePersistentSidebar && _queue != null && _queue!.length > 1) {
+      return ValueListenableBuilder<bool>(
+        valueListenable: fullscreenNotifier,
+        builder: (context, isFullscreen, _) {
+          if (isFullscreen) return playerCore;
+          return Row(
+            children: [
+              Expanded(child: playerCore),
+              Container(width: 1, color: Colors.grey.shade900),
+              SizedBox(
+                width: 300,
+                child: _buildPersistentChannelList(),
+              ),
+            ],
+          );
+        },
+      );
+    }
+
+    return playerCore;
+  }
+
+  Widget _buildPersistentChannelList() {
+    final items = _queue!;
+    final theme = Theme.of(context);
+
+    int selectedIndex = _currentItemIndex;
+    final current = PlayerState.currentContent;
+    if (current != null) {
+      final found = items.indexWhere((item) => item.id == current.id);
+      if (found != -1) selectedIndex = found;
+    }
+
+    return Container(
+      color: Colors.black,
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.black,
+              border: Border(
+                bottom: BorderSide(color: Colors.grey.shade800, width: 1),
+              ),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.live_tv_rounded,
+                    size: 16, color: Colors.white54),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Channels  ${selectedIndex + 1}/${items.length}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              itemCount: items.length,
+              itemBuilder: (context, index) {
+                final item = items[index];
+                final isSelected = index == selectedIndex;
+                return InkWell(
+                  onTap: () => EventBus()
+                      .emit('player_content_item_index_changed', index),
+                  child: Container(
+                    height: 56,
+                    margin: const EdgeInsets.symmetric(
+                        horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? theme.colorScheme.primary
+                              .withValues(alpha: 0.18)
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(6),
+                      border: isSelected
+                          ? Border.all(
+                              color: theme.colorScheme.primary
+                                  .withValues(alpha: 0.5),
+                              width: 1,
+                            )
+                          : null,
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 36,
+                            height: 36,
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade900,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            clipBehavior: Clip.antiAlias,
+                            child: item.imagePath.isNotEmpty
+                                ? Image.network(
+                                    item.imagePath,
+                                    fit: BoxFit.contain,
+                                    errorBuilder: (_, __, ___) => const Icon(
+                                      Icons.live_tv,
+                                      size: 18,
+                                      color: Colors.white24,
+                                    ),
+                                  )
+                                : const Icon(
+                                    Icons.live_tv,
+                                    size: 18,
+                                    color: Colors.white24,
+                                  ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              item.name,
+                              style: TextStyle(
+                                color: isSelected
+                                    ? Colors.white
+                                    : Colors.white70,
+                                fontSize: 13,
+                                fontWeight: isSelected
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (isSelected)
+                            Icon(
+                              Icons.play_arrow_rounded,
+                              color: theme.colorScheme.primary,
+                              size: 18,
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
         ],
       ),
     );
