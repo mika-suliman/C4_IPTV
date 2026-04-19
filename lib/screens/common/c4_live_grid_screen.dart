@@ -24,9 +24,16 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen>
   static const double _minSidebarWidth = 140.0;
   static const double _maxSidebarWidth = 350.0;
 
+  double _channelListWidth = 300.0;
+  static const double _minChannelListWidth = 200.0;
+  static const double _maxChannelListWidth = 500.0;
+
   int _selectedCategoryIndex = 0;
   ContentItem? _selectedChannel;
   final TextEditingController _searchController = TextEditingController();
+  final TextEditingController _categorySearchController =
+      TextEditingController();
+  String _categorySearchQuery = '';
   String _searchQuery = '';
 
   @override
@@ -38,6 +45,11 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen>
     _searchController.addListener(() {
       setState(() =>
           _searchQuery = _searchController.text.toLowerCase().trim());
+    });
+    _categorySearchController.addListener(() {
+      setState(() =>
+          _categorySearchQuery =
+              _categorySearchController.text.toLowerCase().trim());
     });
   }
 
@@ -53,6 +65,7 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen>
       fullscreenNotifier.value = false;
     });
     _searchController.dispose();
+    _categorySearchController.dispose();
     super.dispose();
   }
 
@@ -104,19 +117,30 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen>
     XtreamCodeHomeController controller,
     List<CategoryViewModel> categories,
   ) {
+    final filtered = _categorySearchQuery.isEmpty
+        ? categories
+        : categories
+            .where((c) => c.category.categoryName
+                .toLowerCase()
+                .contains(_categorySearchQuery))
+            .toList();
+
     return Container(
-      width: 200,
+      width: _sidebarWidth,
       decoration: BoxDecoration(
         border: Border(
-            right: BorderSide(
-                color: theme.dividerColor.withValues(alpha: 0.1),
-                width: 1)),
+          right: BorderSide(
+            color: theme.dividerColor.withValues(alpha: 0.1),
+            width: 1,
+          ),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.all(20.0),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             child: Text(
               context.loc.live_streams.toUpperCase(),
               style: theme.textTheme.labelSmall?.copyWith(
@@ -126,23 +150,75 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen>
               ),
             ),
           ),
-          Expanded(
-            child: ListView.builder(
-              itemCount: categories.length,
-              itemBuilder: (context, index) {
-                final isSelected = _selectedCategoryIndex == index;
-                return _CategoryTile(
-                  title: categories[index].category.categoryName,
-                  isSelected: isSelected,
-                  onTap: () {
-                    setState(() {
-                      _selectedCategoryIndex = index;
-                      _selectedChannel = null;
-                    });
-                  },
-                );
-              },
+          // Search bar for categories
+          Padding(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            child: TextField(
+              controller: _categorySearchController,
+              style: const TextStyle(fontSize: 13),
+              decoration: InputDecoration(
+                hintText: 'Search categories...',
+                hintStyle: TextStyle(
+                    fontSize: 13,
+                    color: theme.hintColor),
+                prefixIcon:
+                    const Icon(Icons.search_rounded, size: 18),
+                suffixIcon:
+                    _categorySearchQuery.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.close_rounded,
+                                size: 16),
+                            onPressed: () =>
+                                _categorySearchController.clear(),
+                          )
+                        : null,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide.none,
+                ),
+                filled: true,
+                fillColor:
+                    theme.colorScheme.surface.withValues(alpha: 0.6),
+                contentPadding:
+                    const EdgeInsets.symmetric(vertical: 10),
+                isDense: true,
+              ),
             ),
+          ),
+          const SizedBox(height: 8),
+          Expanded(
+            child: filtered.isEmpty
+                ? Center(
+                    child: Text(
+                      'No categories found',
+                      style: TextStyle(
+                          fontSize: 12, color: theme.hintColor),
+                    ),
+                  )
+                : ListView.builder(
+                    itemCount: filtered.length,
+                    itemBuilder: (context, index) {
+                      // Map back to original index for selection
+                      final origIndex = _categorySearchQuery.isEmpty
+                          ? index
+                          : categories.indexOf(filtered[index]);
+                      final isSelected =
+                          _selectedCategoryIndex == origIndex;
+                      return _CategoryTile(
+                        title: filtered[index]
+                            .category
+                            .categoryName,
+                        isSelected: isSelected,
+                        onTap: () {
+                          setState(() {
+                            _selectedCategoryIndex = origIndex;
+                            _selectedChannel = null;
+                          });
+                        },
+                      );
+                    },
+                  ),
           ),
         ],
       ),
@@ -414,13 +490,250 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen>
     );
   }
 
+  Widget _buildInlineChannelList(
+    ThemeData theme,
+    FavoritesController favoritesController,
+  ) {
+    final channels = _currentCategoryChannels;
+    final filtered = _searchQuery.isEmpty
+        ? channels
+        : channels
+            .where((c) =>
+                c.name.toLowerCase().contains(_searchQuery))
+            .toList();
+
+    int selectedIndex = -1;
+    if (_selectedChannel != null) {
+      selectedIndex =
+          filtered.indexWhere((c) => c.id == _selectedChannel!.id);
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.black,
+        border: Border(
+          left: BorderSide(
+            color: theme.dividerColor.withValues(alpha: 0.15),
+            width: 1,
+          ),
+        ),
+      ),
+      child: Column(
+        children: [
+          // Header
+          Container(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.black,
+              border: Border(
+                bottom: BorderSide(
+                    color: Colors.grey.shade800, width: 1),
+              ),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.live_tv_rounded,
+                    size: 16, color: Colors.white54),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    selectedIndex >= 0
+                        ? 'Channels  ${selectedIndex + 1}/${filtered.length}'
+                        : 'Channels  ${filtered.length}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Search bar
+          Padding(
+            padding: const EdgeInsets.fromLTRB(10, 10, 10, 4),
+            child: TextField(
+              controller: _searchController,
+              style: const TextStyle(fontSize: 13, color: Colors.white),
+              decoration: InputDecoration(
+                hintText: 'Search channels...',
+                hintStyle:
+                    TextStyle(fontSize: 13, color: Colors.grey.shade500),
+                prefixIcon: Icon(Icons.search_rounded,
+                    size: 18, color: Colors.grey.shade500),
+                suffixIcon: _searchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: Icon(Icons.close_rounded,
+                            size: 16, color: Colors.grey.shade500),
+                        onPressed: () => _searchController.clear(),
+                      )
+                    : null,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide:
+                      BorderSide(color: Colors.grey.shade800, width: 1),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide:
+                      BorderSide(color: Colors.grey.shade800, width: 1),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(
+                      color: theme.colorScheme.primary, width: 1),
+                ),
+                filled: true,
+                fillColor: Colors.grey.shade900,
+                contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                isDense: true,
+              ),
+            ),
+          ),
+          // Channel list
+          Expanded(
+            child: filtered.isEmpty
+                ? Center(
+                    child: Text(
+                      'No channels found',
+                      style: TextStyle(
+                          fontSize: 12, color: Colors.grey.shade600),
+                    ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    itemCount: filtered.length,
+                    itemBuilder: (context, index) {
+                      final channel = filtered[index];
+                      final isSelected =
+                          _selectedChannel?.id == channel.id;
+                      final isFavorited =
+                          favoritesController.favorites.any(
+                        (f) =>
+                            f.streamId == channel.id &&
+                            f.contentType == channel.contentType,
+                      );
+
+                      return InkWell(
+                        onTap: () => setState(
+                            () => _selectedChannel = channel),
+                        child: Container(
+                          height: 56,
+                          margin: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? theme.colorScheme.primary
+                                    .withValues(alpha: 0.18)
+                                : Colors.transparent,
+                            borderRadius:
+                                BorderRadius.circular(6),
+                            border: isSelected
+                                ? Border.all(
+                                    color: theme.colorScheme.primary
+                                        .withValues(alpha: 0.5),
+                                    width: 1,
+                                  )
+                                : null,
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 36,
+                                  height: 36,
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey.shade900,
+                                    borderRadius:
+                                        BorderRadius.circular(4),
+                                  ),
+                                  clipBehavior: Clip.antiAlias,
+                                  child: channel.imageUrl.isNotEmpty
+                                      ? Image.network(
+                                          channel.imageUrl,
+                                          fit: BoxFit.contain,
+                                          errorBuilder: (_, __, ___) =>
+                                              const Icon(
+                                            Icons.live_tv,
+                                            size: 18,
+                                            color: Colors.white24,
+                                          ),
+                                        )
+                                      : const Icon(
+                                          Icons.live_tv,
+                                          size: 18,
+                                          color: Colors.white24,
+                                        ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    channel.name,
+                                    style: TextStyle(
+                                      color: isSelected
+                                          ? Colors.white
+                                          : Colors.white70,
+                                      fontSize: 13,
+                                      fontWeight: isSelected
+                                          ? FontWeight.bold
+                                          : FontWeight.normal,
+                                    ),
+                                    maxLines: 2,
+                                    overflow:
+                                        TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                // Favorite button
+                                IconButton(
+                                  padding: EdgeInsets.zero,
+                                  constraints:
+                                      const BoxConstraints(
+                                    minWidth: 32,
+                                    minHeight: 32,
+                                  ),
+                                  icon: Icon(
+                                    isFavorited
+                                        ? Icons.favorite_rounded
+                                        : Icons
+                                            .favorite_border_rounded,
+                                    color: isFavorited
+                                        ? Colors.redAccent
+                                        : Colors.grey.shade600,
+                                    size: 18,
+                                  ),
+                                  onPressed: () =>
+                                      favoritesController
+                                          .toggleFavorite(channel),
+                                ),
+                                if (isSelected)
+                                  Icon(
+                                    Icons.play_arrow_rounded,
+                                    color:
+                                        theme.colorScheme.primary,
+                                    size: 16,
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
     final theme = Theme.of(context);
     final controller = context.watch<XtreamCodeHomeController>();
-    // ignore: unused_local_variable
-    final favoritesController = context.watch<FavoritesController>();
 
     if (controller.liveCategories == null ||
         controller.liveCategories!.isEmpty) {
@@ -478,21 +791,55 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen>
                 ),
               ],
 
-              // ── CENTER+RIGHT: Player + Channel list ─────────────
-              // This Expanded NEVER changes flex. PlayerWidget
-              // always fills this space. No constraint change = no reload.
+              // ── CENTER+RIGHT: Player + channel list splitter ─────
               Expanded(
                 child: _selectedChannel == null
                     ? _buildIdlePlaceholder()
-                    : PlayerWidget(
-                        key: ValueKey(_selectedChannel!.id),
-                        contentItem: _selectedChannel!,
-                        showControls: true,
-                        showInfo: false,
-                        onFullscreen: _toggleFullscreen,
-                        queue: _currentCategoryChannels,
-                        isInline: true,
-                        showPersistentSidebar: true,
+                    : Row(
+                        children: [
+                          Expanded(
+                            child: PlayerWidget(
+                              key: ValueKey(_selectedChannel!.id),
+                              contentItem: _selectedChannel!,
+                              showControls: true,
+                              showInfo: false,
+                              onFullscreen: _toggleFullscreen,
+                              queue: _currentCategoryChannels,
+                              isInline: true,
+                              showPersistentSidebar: false,
+                            ),
+                          ),
+                          if (!isFullscreen) ...[
+                            // Channel list splitter
+                            MouseRegion(
+                              cursor: SystemMouseCursors.resizeColumn,
+                              child: GestureDetector(
+                                behavior: HitTestBehavior.translucent,
+                                onHorizontalDragUpdate: (d) {
+                                  setState(() {
+                                    _channelListWidth =
+                                        (_channelListWidth - d.delta.dx)
+                                            .clamp(
+                                              _minChannelListWidth,
+                                              _maxChannelListWidth,
+                                            );
+                                  });
+                                },
+                                child: Container(
+                                  width: 8,
+                                  color: Colors.transparent,
+                                ),
+                              ),
+                            ),
+                            SizedBox(
+                              width: _channelListWidth,
+                              child: _buildInlineChannelList(
+                                theme,
+                                context.watch<FavoritesController>(),
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
               ),
             ],
