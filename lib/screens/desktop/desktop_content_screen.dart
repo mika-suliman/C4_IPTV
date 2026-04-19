@@ -8,7 +8,6 @@ import 'package:another_iptv_player/screens/search_screen.dart';
 import 'package:another_iptv_player/services/app_state.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../models/content_type.dart';
-import 'package:another_iptv_player/widgets/common/resizable_sidebar.dart';
 
 /// Desktop 2-panel layout used for Live TV, Movies, and Series tabs.
 /// Left panel: category sidebar. Right panel: content grid with search.
@@ -29,6 +28,10 @@ class DesktopContentScreen extends StatefulWidget {
 }
 
 class _DesktopContentScreenState extends State<DesktopContentScreen> {
+  double _sidebarWidth = 240.0;
+  static const double _minSidebarWidth = 140.0;
+  static const double _maxSidebarWidth = 420.0;
+
   int _selectedCategoryIndex = 0; // 0 = "All"
   String _searchQuery = '';
   int? _hoveredCategoryIndex;
@@ -94,10 +97,34 @@ class _DesktopContentScreenState extends State<DesktopContentScreen> {
       backgroundColor: const Color(0xFF0B0E14),
       body: Row(
         children: [
-          ResizableSidebar(
-            initialWidth: 240,
+          SizedBox(
+            width: _sidebarWidth,
             child: _buildCategorySidebar(context),
           ),
+
+          // Draggable vertical splitter
+          MouseRegion(
+            cursor: SystemMouseCursors.resizeColumn,
+            child: GestureDetector(
+              behavior: HitTestBehavior.translucent,
+              onHorizontalDragUpdate: (details) {
+                setState(() {
+                  _sidebarWidth = (_sidebarWidth + details.delta.dx)
+                      .clamp(_minSidebarWidth, _maxSidebarWidth);
+                });
+              },
+              child: SizedBox(
+                width: 8,
+                child: Center(
+                  child: Container(
+                    width: 1,
+                    color: const Color(0xFF1E2128),
+                  ),
+                ),
+              ),
+            ),
+          ),
+
           Expanded(child: _buildContentArea(context)),
         ],
       ),
