@@ -9,7 +9,6 @@ import '../../models/category_view_model.dart';
 import '../../models/playlist_content_model.dart';
 import '../../services/fullscreen_notifier.dart';
 import '../../utils/navigate_by_content_type.dart';
-import '../../utils/responsive_helper.dart';
 import '../../widgets/player_widget.dart';
 
 class C4LiveGridScreen extends StatefulWidget {
@@ -21,6 +20,14 @@ class C4LiveGridScreen extends StatefulWidget {
 
 class _C4LiveGridScreenState extends State<C4LiveGridScreen>
     with AutomaticKeepAliveClientMixin {
+  double _sidebarWidth = 200.0;
+  static const double _minSidebarWidth = 140.0;
+  static const double _maxSidebarWidth = 350.0;
+
+  double _channelPanelWidth = 320.0;
+  static const double _minChannelPanelWidth = 180.0;
+  static const double _maxChannelPanelWidth = 520.0;
+
   int _selectedCategoryIndex = 0;
   ContentItem? _selectedChannel;
   final TextEditingController _searchController = TextEditingController();
@@ -443,60 +450,129 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen>
     return ValueListenableBuilder<bool>(
       valueListenable: fullscreenNotifier,
       builder: (context, isFullscreen, _) {
-        final isDesktop = ResponsiveHelper.isDesktopOrTV(context);
+        return LayoutBuilder(
+          builder: (context, outerConstraints) {
+            final totalW = outerConstraints.maxWidth;
+            final playerAvailableWidth =
+                (totalW - _sidebarWidth - _channelPanelWidth).clamp(0.0, double.infinity);
+            final playerHeight = playerAvailableWidth * 9.0 / 16.0;
 
-        return Scaffold(
-          backgroundColor: Colors.black,
-          body: Row(
-            children: [
-              // 1. Categories Sidebar (Hidden in Fullscreen)
-              if (!isFullscreen)
-                SizedBox(
-                  width: 200,
-                  child: _buildCategorySidebar(
-                      theme, controller, categories),
-                ),
+            return Stack(
+              children: [
+                // Layer 0: background layout panels (no PlayerWidget)
+                if (!isFullscreen) ...[
+                  // 1. Categories Sidebar (Left, resizable)
+                  Positioned(
+                    left: 0,
+                    top: 0,
+                    bottom: 0,
+                    width: _sidebarWidth,
+                    child: _buildCategorySidebar(
+                        theme, controller, categories),
+                  ),
 
-              Expanded(
-                child: Column(
-                  children: [
-                    // Top: Player Area
-                    Expanded(
-                      flex: (isFullscreen || isDesktop) ? 1 : 65,
-                      child: Container(
-                        color: Colors.black,
-                        child: _selectedChannel == null
-                            ? _buildIdlePlaceholder()
-                            : PlayerWidget(
-                                key: ValueKey(_selectedChannel!.id),
-                                contentItem: _selectedChannel!,
-                                showControls: true,
-                                showInfo: false,
-                                onFullscreen: _toggleFullscreen,
-                                queue: _currentCategoryChannels,
-                                isInline: true,
-                              ),
+                  // 2. Center Column: ONLY the player placeholder (16:9)
+                  Positioned(
+                    left: _sidebarWidth,
+                    right: _channelPanelWidth,
+                    top: 0,
+                    bottom: 0,
+                    child: Container(
+                      color: Colors.black.withValues(alpha: 0.1),
+                      child: Column(
+                        children: [
+                          Align(
+                            alignment: Alignment.topCenter,
+                            child: AspectRatio(
+                              aspectRatio: 16 / 9,
+                              child: const ColoredBox(color: Colors.black),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
+                  ),
 
-                    // Bottom: Channel Grid (hidden on desktop or fullscreen)
-                    if (!isFullscreen && !isDesktop)
-                      Expanded(
-                        flex: 35,
-                        child: Container(
-                          color: Colors.black.withValues(alpha: 0.1),
-                          child: _buildSearchAndChannelList(
-                            theme,
-                            favoritesController,
-                            filteredChannels,
-                          ),
-                        ),
+                  // Splitter for resizing channel list panel
+                  Positioned(
+                    right: _channelPanelWidth - 4,
+                    top: 0,
+                    bottom: 0,
+                    width: 8,
+                    child: MouseRegion(
+                      cursor: SystemMouseCursors.resizeColumn,
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.translucent,
+                        onHorizontalDragUpdate: (details) {
+                          setState(() {
+                            _channelPanelWidth =
+                                (_channelPanelWidth - details.delta.dx)
+                                    .clamp(
+                                      _minChannelPanelWidth,
+                                      _maxChannelPanelWidth,
+                                    );
+                          });
+                        },
                       ),
-                  ],
+                    ),
+                  ),
+
+                  // 3. Right Panel: channel list
+                  Positioned(
+                    right: 0,
+                    top: 0,
+                    bottom: 0,
+                    width: _channelPanelWidth,
+                    child: _buildSearchAndChannelList(
+                      theme,
+                      favoritesController,
+                      filteredChannels,
+                    ),
+                  ),
+
+                  // Splitter for resizing sidebar
+                  Positioned(
+                    left: _sidebarWidth - 4,
+                    top: 0,
+                    bottom: 0,
+                    width: 8,
+                    child: MouseRegion(
+                      cursor: SystemMouseCursors.resizeColumn,
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.translucent,
+                        onHorizontalDragUpdate: (details) {
+                          setState(() {
+                            _sidebarWidth = (_sidebarWidth + details.delta.dx)
+                                .clamp(_minSidebarWidth, _maxSidebarWidth);
+                          });
+                        },
+                      ),
+                    ),
+                  ),
+                ],
+
+                // Layer 1: PlayerWidget — parent is ALWAYS Positioned
+                Positioned(
+                  left: isFullscreen ? 0 : _sidebarWidth,
+                  top: 0,
+                  right: isFullscreen ? 0 : _channelPanelWidth,
+                  bottom: isFullscreen ? 0 : null,
+                  height: isFullscreen ? null : playerHeight,
+                  child: _selectedChannel == null
+                      ? _buildIdlePlaceholder()
+                      : PlayerWidget(
+                          key: ValueKey(_selectedChannel!.id),
+                          contentItem: _selectedChannel!,
+                          showControls: true,
+                          showInfo: false,
+                          onFullscreen: _toggleFullscreen,
+                          queue: _currentCategoryChannels,
+                          isInline: true,
+                        ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            );
+          },
         );
       },
     );
