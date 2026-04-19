@@ -5,6 +5,7 @@ import 'package:another_iptv_player/models/playlist_content_model.dart';
 import 'package:another_iptv_player/models/content_type.dart';
 import 'package:another_iptv_player/widgets/player_widget.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:another_iptv_player/widgets/common/resizable_sidebar.dart';
 
 class DesktopLiveTvScreen extends StatefulWidget {
   final List<CategoryViewModel> categories;
@@ -98,9 +99,10 @@ class _DesktopLiveTvScreenState extends State<DesktopLiveTvScreen> {
       body: Row(
         children: [
           // Left Sidebar: Categories
-          Container(
-            width: 240,
-            decoration: const BoxDecoration(
+          ResizableSidebar(
+            initialWidth: 240,
+            child: Container(
+              decoration: const BoxDecoration(
               color: Color(0xFF0D0F13),
               border: Border(
                 right: BorderSide(color: Color(0xFF1E2128), width: 1),
@@ -149,6 +151,7 @@ class _DesktopLiveTvScreenState extends State<DesktopLiveTvScreen> {
                 ),
               ],
             ),
+          ),
           ),
 
           // Main Content Area

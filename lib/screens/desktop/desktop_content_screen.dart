@@ -8,6 +8,7 @@ import 'package:another_iptv_player/screens/search_screen.dart';
 import 'package:another_iptv_player/services/app_state.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../models/content_type.dart';
+import 'package:another_iptv_player/widgets/common/resizable_sidebar.dart';
 
 /// Desktop 2-panel layout used for Live TV, Movies, and Series tabs.
 /// Left panel: category sidebar. Right panel: content grid with search.
@@ -93,7 +94,10 @@ class _DesktopContentScreenState extends State<DesktopContentScreen> {
       backgroundColor: const Color(0xFF0B0E14),
       body: Row(
         children: [
-          _buildCategorySidebar(context),
+          ResizableSidebar(
+            initialWidth: 240,
+            child: _buildCategorySidebar(context),
+          ),
           Expanded(child: _buildContentArea(context)),
         ],
       ),
@@ -106,7 +110,6 @@ class _DesktopContentScreenState extends State<DesktopContentScreen> {
 
   Widget _buildCategorySidebar(BuildContext context) {
     return Container(
-      width: 240,
       decoration: const BoxDecoration(
         color: Color(0xFF0D0F13),
         border: Border(right: BorderSide(color: Color(0xFF1E2128), width: 1)),
